@@ -76,9 +76,11 @@
         }
 
         #canvas {
-            display: none;
+            display: block;
             border: 2px solid white;
-            margin-top: 20px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
         }
 
         .countdown {
@@ -135,9 +137,9 @@
 <body>
     <div class="container">
         <div class="emoji">🎮</div>
-        <h1>Скоро здесь что-то будет!</h1>
+        <h1>Играй в змейку!</h1>
         <p>Добро пожаловать в Маф-клуб Demo</p>
-        <p>✨ Завтра здесь появится новая программа</p>
+        <p>🐍 Управление: стрелки на клавиатуре</p>
 
         <div class="countdown">
             <div class="countdown-title">⏰ До запуска осталось:</div>
@@ -160,7 +162,7 @@
         <div class="info">
             <p>Live Coding Session</p>
             <p>Завтра в 16:00 по Москве 🚀</p>
-            <p style="font-size: 1.2rem; margin-top: 20px; opacity: 0.9;">версия 1.0.3</p>
+            <p style="font-size: 1.2rem; margin-top: 20px; opacity: 0.9;">версия 1.0.4</p>
         </div>
 
         <!-- Canvas для змейки (завтра) -->
@@ -197,8 +199,130 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        console.log('🎮 Готовимся к live coding!');
-        console.log('Завтра в 16:00 здесь появится змейка');
+        console.log('🎮 Маф-клуб Demo - Змейка готова!');
+
+        // Игра Змейка
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [
+            {x: 10, y: 10}
+        ];
+        let velocityX = 0;
+        let velocityY = 0;
+        let food = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount)
+        };
+        let score = 0;
+        let gameRunning = true;
+
+        // Управление
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (velocityY === 0) {
+                        velocityX = 0;
+                        velocityY = -1;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    if (velocityY === 0) {
+                        velocityX = 0;
+                        velocityY = 1;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (velocityX === 0) {
+                        velocityX = -1;
+                        velocityY = 0;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    if (velocityX === 0) {
+                        velocityX = 1;
+                        velocityY = 0;
+                    }
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            // Движение змейки
+            const head = {
+                x: snake[0].x + velocityX,
+                y: snake[0].y + velocityY
+            };
+
+            // Проверка столкновений со стенами
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                resetGame();
+                return;
+            }
+
+            // Проверка столкновения с собой
+            for (let segment of snake) {
+                if (head.x === segment.x && head.y === segment.y) {
+                    resetGame();
+                    return;
+                }
+            }
+
+            snake.unshift(head);
+
+            // Проверка съедания еды
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                food = {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount)
+                };
+            } else {
+                snake.pop();
+            }
+
+            // Отрисовка
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Змейка
+            ctx.fillStyle = '#4ade80';
+            for (let segment of snake) {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+            }
+
+            // Еда
+            ctx.fillStyle = '#f87171';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+            // Счёт
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText('Счёт: ' + score, 10, 25);
+        }
+
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            velocityX = 0;
+            velocityY = 0;
+            score = 0;
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+        }
+
+        // Запуск игры
+        setInterval(gameLoop, 100);
     </script>
 </body>
 </html>
