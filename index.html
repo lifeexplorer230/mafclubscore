@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Маф-клуб - Live Coding Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        p {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .emoji {
+            font-size: 5rem;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+
+        .info {
+            margin-top: 30px;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        #canvas {
+            display: none;
+            border: 2px solid white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">👋</div>
+        <h1>Привет, мир!</h1>
+        <p>Добро пожаловать в Маф-клуб Demo</p>
+        <p>🎮 Завтра здесь будет змейка</p>
+        <div class="info">
+            <p>Live Coding Session</p>
+            <p>Cloudflare Pages + GitHub</p>
+        </div>
+
+        <!-- Canvas для змейки (завтра) -->
+        <canvas id="canvas" width="400" height="400"></canvas>
+    </div>
+
+    <script>
+        // Консольное приветствие для разработчиков :)
+        console.log('🎮 Готовимся к live coding!');
+        console.log('Завтра здесь появится змейка');
+
+        // Место для кода змейки (завтра добавим)
+        // const canvas = document.getElementById('canvas');
+        // const ctx = canvas.getContext('2d');
+    </script>
+</body>
+</html>
