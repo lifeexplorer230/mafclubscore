@@ -175,7 +175,7 @@
         <div class="info">
             <p>Live Coding Session</p>
             <p>Завтра в 16:00 по Москве 🚀</p>
-            <p style="font-size: 1.2rem; margin-top: 20px; opacity: 0.9;">версия 1.0.5</p>
+            <p style="font-size: 1.2rem; margin-top: 20px; opacity: 0.9;">версия 1.0.6</p>
         </div>
 
         <!-- Игра Змейка -->
@@ -187,7 +187,7 @@
         <!-- Игра Волк ловит яйца -->
         <div class="game-section">
             <div class="game-title">🥚 Волк ловит яйца</div>
-            <p style="font-size: 1rem; margin-bottom: 10px;">Управление: 1, 2, 3, 4 или стрелки</p>
+            <p style="font-size: 1rem; margin-bottom: 10px;">Управление: A (левый верх), Z (левый низ), H (правый верх), B (правый низ)</p>
             <canvas id="eggCanvas" width="500" height="400"></canvas>
         </div>
     </div>
@@ -369,35 +369,22 @@
 
         // Управление волком
         document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case '1':
-                case 'ArrowUp':
-                    if (e.shiftKey || e.key === '1') {
-                        wolfPosition = 1;
-                        e.preventDefault();
-                    }
-                    break;
-                case '2':
-                case 'ArrowDown':
-                    if (e.shiftKey || e.key === '2') {
-                        wolfPosition = 2;
-                        e.preventDefault();
-                    }
-                    break;
-                case '3':
-                    wolfPosition = 3;
+            const key = e.key.toLowerCase();
+            switch(key) {
+                case 'a':
+                    wolfPosition = 1; // левая верхняя
                     e.preventDefault();
                     break;
-                case '4':
-                    wolfPosition = 4;
+                case 'z':
+                    wolfPosition = 2; // левая нижняя
                     e.preventDefault();
                     break;
-                case 'ArrowLeft':
-                    wolfPosition = wolfPosition === 1 ? 2 : (wolfPosition === 4 ? 3 : wolfPosition);
+                case 'b':
+                    wolfPosition = 3; // правая нижняя
                     e.preventDefault();
                     break;
-                case 'ArrowRight':
-                    wolfPosition = wolfPosition === 2 ? 1 : (wolfPosition === 3 ? 4 : wolfPosition);
+                case 'h':
+                    wolfPosition = 4; // правая верхняя
                     e.preventDefault();
                     break;
             }
@@ -407,10 +394,19 @@
         function createEgg() {
             const pos = Math.floor(Math.random() * 4) + 1;
             const startPos = positions[pos].chicken;
+            const endPos = positions[pos].basket;
+
+            // Вычисляем направление движения для диагонали
+            const dx = (endPos.x - startPos.x) / 50; // скорость по X
+            const dy = (endPos.y - startPos.y) / 50; // скорость по Y
+
             eggs.push({
                 position: pos,
                 x: startPos.x + 20,
                 y: startPos.y + 30,
+                dx: dx,
+                dy: dy,
+                targetY: endPos.y,
                 caught: false
             });
         }
@@ -442,14 +438,12 @@
                 const egg = eggs[i];
 
                 if (!egg.caught) {
-                    // Движение яйца по траектории
-                    const startPos = positions[egg.position].chicken;
-                    const endPos = positions[egg.position].basket;
-
-                    egg.y += eggSpeed;
+                    // Движение яйца по диагонали
+                    egg.x += egg.dx * eggSpeed;
+                    egg.y += egg.dy * eggSpeed;
 
                     // Проверка, дошло ли яйцо до корзины
-                    if (egg.y >= endPos.y) {
+                    if (egg.y >= egg.targetY) {
                         if (wolfPosition === egg.position) {
                             // Поймали!
                             eggScore++;
