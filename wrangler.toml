@@ -1,0 +1,7 @@
+name = "mafclubdemo"
+compatibility_date = "2025-11-05"
+
+[assets]
+directory = "."
+
+# Статический сайт - все файлы из корня (.)
