@@ -140,8 +140,22 @@
             </div>
         </div>
 
-        <!-- Место для других игр -->
-        <!-- Будущие игры будут добавляться сюда -->
+        <!-- Игра Волк ловит яйца -->
+        <div class="game-card">
+            <div class="game-title">🐺 Ну, Погоди!</div>
+            <canvas id="wolfCanvas" class="game-canvas" width="400" height="400"></canvas>
+            <div class="game-controls">
+                <div class="game-score">
+                    Счёт: <span id="wolfScore">0</span> |
+                    Промахи: <span id="wolfMisses">0</span>/3
+                </div>
+                <button class="game-button" onclick="startWolfGame()">Начать игру</button>
+                <div class="game-instructions">
+                    Управление: Q A P L или 1 2 3 4<br>
+                    (углы: верх-лево, низ-лево, верх-право, низ-право)
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -289,6 +303,236 @@
         drawSnakeGame();
 
         console.log('🐍 Змейка готова к игре!');
+
+        // ========== ИГРА ВОЛК ЛОВИТ ЯЙЦА ==========
+        const wolfCanvas = document.getElementById('wolfCanvas');
+        const wolfCtx = wolfCanvas.getContext('2d');
+        const wolfScoreElement = document.getElementById('wolfScore');
+        const wolfMissesElement = document.getElementById('wolfMisses');
+
+        let wolfPosition = 2; // 0: левый-верх, 1: левый-низ, 2: правый-верх, 3: правый-низ
+        let eggs = [];
+        let wolfScore = 0;
+        let wolfMisses = 0;
+        let wolfGameLoop = null;
+        let wolfGameStarted = false;
+        let eggSpeed = 2;
+        let spawnTimer = 0;
+        let spawnInterval = 60; // frames
+
+        const wolfPositions = [
+            { x: 80, y: 120 },   // левый-верх
+            { x: 80, y: 280 },   // левый-низ
+            { x: 320, y: 120 },  // правый-верх
+            { x: 320, y: 280 }   // правый-низ
+        ];
+
+        const eggPaths = [
+            { startX: 50, startY: 20, endX: 100, endY: 150, side: 0 },   // левый-верх
+            { startX: 50, startY: 380, endX: 100, endY: 250, side: 1 },  // левый-низ
+            { startX: 350, startY: 20, endX: 300, endY: 150, side: 2 },  // правый-верх
+            { startX: 350, startY: 380, endX: 300, endY: 250, side: 3 }  // правый-низ
+        ];
+
+        function startWolfGame() {
+            if (wolfGameLoop) {
+                cancelAnimationFrame(wolfGameLoop);
+            }
+
+            // Сброс игры
+            wolfPosition = 2;
+            eggs = [];
+            wolfScore = 0;
+            wolfMisses = 0;
+            eggSpeed = 2;
+            spawnTimer = 0;
+            spawnInterval = 60;
+            wolfScoreElement.textContent = wolfScore;
+            wolfMissesElement.textContent = wolfMisses;
+            wolfGameStarted = true;
+
+            wolfGameLoopFunc();
+        }
+
+        function wolfGameLoopFunc() {
+            if (!wolfGameStarted) return;
+
+            updateWolfGame();
+            drawWolfGame();
+
+            wolfGameLoop = requestAnimationFrame(wolfGameLoopFunc);
+        }
+
+        function updateWolfGame() {
+            // Спавн яиц
+            spawnTimer++;
+            if (spawnTimer >= spawnInterval) {
+                spawnTimer = 0;
+                const randomPath = Math.floor(Math.random() * 4);
+                const path = eggPaths[randomPath];
+                eggs.push({
+                    x: path.startX,
+                    y: path.startY,
+                    targetX: path.endX,
+                    targetY: path.endY,
+                    side: path.side,
+                    progress: 0
+                });
+            }
+
+            // Обновление яиц
+            for (let i = eggs.length - 1; i >= 0; i--) {
+                const egg = eggs[i];
+                egg.progress += eggSpeed / 100;
+
+                // Интерполяция позиции
+                egg.x = egg.x + (egg.targetX - egg.x) * 0.02 * eggSpeed;
+                egg.y = egg.y + (egg.targetY - egg.y) * 0.02 * eggSpeed;
+
+                // Проверка достижения конца пути
+                const distance = Math.sqrt(
+                    Math.pow(egg.x - egg.targetX, 2) +
+                    Math.pow(egg.y - egg.targetY, 2)
+                );
+
+                if (distance < 30) {
+                    // Проверка, поймал ли волк яйцо
+                    if (wolfPosition === egg.side) {
+                        wolfScore++;
+                        wolfScoreElement.textContent = wolfScore;
+
+                        // Увеличение сложности каждые 10 очков
+                        if (wolfScore % 10 === 0 && eggSpeed < 5) {
+                            eggSpeed += 0.3;
+                            spawnInterval = Math.max(30, spawnInterval - 5);
+                        }
+                    } else {
+                        wolfMisses++;
+                        wolfMissesElement.textContent = wolfMisses;
+
+                        if (wolfMisses >= 3) {
+                            wolfGameOver();
+                            return;
+                        }
+                    }
+                    eggs.splice(i, 1);
+                }
+            }
+        }
+
+        function drawWolfGame() {
+            // Очистка canvas
+            wolfCtx.fillStyle = '#87CEEB';
+            wolfCtx.fillRect(0, 0, wolfCanvas.width, wolfCanvas.height);
+
+            // Рисуем желобки (пути яиц)
+            wolfCtx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
+            wolfCtx.lineWidth = 3;
+            eggPaths.forEach(path => {
+                wolfCtx.beginPath();
+                wolfCtx.moveTo(path.startX, path.startY);
+                wolfCtx.lineTo(path.endX, path.endY);
+                wolfCtx.stroke();
+            });
+
+            // Рисуем курятники (источники яиц)
+            wolfCtx.fillStyle = '#8B4513';
+            wolfCtx.fillRect(20, 10, 60, 40);
+            wolfCtx.fillRect(20, 350, 60, 40);
+            wolfCtx.fillRect(320, 10, 60, 40);
+            wolfCtx.fillRect(320, 350, 60, 40);
+
+            wolfCtx.fillStyle = 'white';
+            wolfCtx.font = '20px Arial';
+            wolfCtx.fillText('🐔', 40, 35);
+            wolfCtx.fillText('🐔', 40, 375);
+            wolfCtx.fillText('🐔', 340, 35);
+            wolfCtx.fillText('🐔', 340, 375);
+
+            // Рисуем корзины в каждой позиции (неактивные)
+            wolfCtx.fillStyle = 'rgba(139, 69, 19, 0.3)';
+            wolfPositions.forEach((pos, index) => {
+                if (index !== wolfPosition) {
+                    wolfCtx.fillRect(pos.x - 15, pos.y - 10, 30, 20);
+                }
+            });
+
+            // Рисуем волка (активная корзина)
+            const currentPos = wolfPositions[wolfPosition];
+            wolfCtx.fillStyle = '#8B4513';
+            wolfCtx.fillRect(currentPos.x - 20, currentPos.y - 15, 40, 30);
+            wolfCtx.fillStyle = 'white';
+            wolfCtx.font = '30px Arial';
+            wolfCtx.fillText('🐺', currentPos.x - 15, currentPos.y + 10);
+
+            // Рисуем яйца
+            eggs.forEach(egg => {
+                wolfCtx.fillStyle = '#FFF8DC';
+                wolfCtx.strokeStyle = '#F0E68C';
+                wolfCtx.lineWidth = 2;
+                wolfCtx.beginPath();
+                wolfCtx.ellipse(egg.x, egg.y, 8, 12, 0, 0, Math.PI * 2);
+                wolfCtx.fill();
+                wolfCtx.stroke();
+            });
+
+            // Рисуем центральное дерево или элемент
+            wolfCtx.fillStyle = 'rgba(34, 139, 34, 0.3)';
+            wolfCtx.fillRect(180, 150, 40, 100);
+        }
+
+        function wolfGameOver() {
+            wolfGameStarted = false;
+            cancelAnimationFrame(wolfGameLoop);
+
+            wolfCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            wolfCtx.fillRect(0, 0, wolfCanvas.width, wolfCanvas.height);
+
+            wolfCtx.fillStyle = 'white';
+            wolfCtx.font = '30px Arial';
+            wolfCtx.textAlign = 'center';
+            wolfCtx.fillText('Игра окончена!', wolfCanvas.width / 2, wolfCanvas.height / 2 - 30);
+            wolfCtx.font = '24px Arial';
+            wolfCtx.fillText(`Счёт: ${wolfScore}`, wolfCanvas.width / 2, wolfCanvas.height / 2 + 10);
+            wolfCtx.font = '18px Arial';
+            wolfCtx.fillText('Слишком много промахов!', wolfCanvas.width / 2, wolfCanvas.height / 2 + 40);
+        }
+
+        // Управление волком
+        document.addEventListener('keydown', (e) => {
+            if (!wolfGameStarted) return;
+
+            switch(e.key.toLowerCase()) {
+                case 'q':
+                case '1':
+                    wolfPosition = 0; // левый-верх
+                    break;
+                case 'a':
+                case '2':
+                    wolfPosition = 1; // левый-низ
+                    break;
+                case 'p':
+                case '3':
+                    wolfPosition = 2; // правый-верх
+                    break;
+                case 'l':
+                case '4':
+                    wolfPosition = 3; // правый-низ
+                    break;
+            }
+        });
+
+        // Начальная отрисовка
+        wolfCtx.fillStyle = '#87CEEB';
+        wolfCtx.fillRect(0, 0, wolfCanvas.width, wolfCanvas.height);
+        wolfCtx.fillStyle = 'white';
+        wolfCtx.font = '24px Arial';
+        wolfCtx.textAlign = 'center';
+        wolfCtx.fillText('🐺 Ну, Погоди!', wolfCanvas.width / 2, wolfCanvas.height / 2 - 20);
+        wolfCtx.font = '16px Arial';
+        wolfCtx.fillText('Нажми "Начать игру"', wolfCanvas.width / 2, wolfCanvas.height / 2 + 20);
+
+        console.log('🐺 Волк ловит яйца готов к игре!');
     </script>
 </body>
 </html>
