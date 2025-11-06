@@ -124,6 +124,40 @@
         .header {
             animation: fadeIn 1s ease-in;
         }
+
+        .link-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            cursor: pointer;
+        }
+
+        .link-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .link-card-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .link-card-description {
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -162,6 +196,15 @@
                 </div>
             </div>
         </div>
+
+        <!-- Ссылка на систему рейтинга Мафия -->
+        <a href="mafia-rating.html" class="link-card">
+            <div class="link-card-title">🎲 Рейтинг Мафия</div>
+            <div class="link-card-description">
+                Профессиональная система подсчёта баллов<br>
+                МАФ-Клуб «SHOWTIME»
+            </div>
+        </a>
     </div>
 
     <script>
