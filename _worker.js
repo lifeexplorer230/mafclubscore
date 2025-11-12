@@ -100,15 +100,15 @@ async function getDayStats(env, corsHeaders) {
         SUM(gr.points) as total_points,
         SUM(CASE WHEN gr.points > 0 THEN 1 ELSE 0 END) as wins,
         COUNT(gr.id) as games_played,
-        CAST(SUM(gr.points) AS REAL) / NULLIF(SUM(CASE WHEN gr.points > 0 THEN 1 ELSE 0 END), 0) as avg_points_per_win
+        CAST(SUM(gr.points) AS REAL) / COUNT(gr.id) as avg_points
       FROM players p
       JOIN game_results gr ON p.id = gr.player_id
       JOIN games g ON gr.game_id = g.id
       JOIN game_sessions gs ON g.session_id = gs.id
       WHERE gs.date = ?
       GROUP BY p.id, p.name
-      HAVING wins > 0 AND games_played >= 3
-      ORDER BY avg_points_per_win DESC
+      HAVING games_played >= 3
+      ORDER BY avg_points DESC
       LIMIT 1
     `).bind(day.date).first();
 
@@ -120,7 +120,7 @@ async function getDayStats(env, corsHeaders) {
         total_points: bestPlayer.total_points,
         wins: bestPlayer.wins,
         games_played: bestPlayer.games_played,
-        avg_points_per_win: bestPlayer.avg_points_per_win ? parseFloat(bestPlayer.avg_points_per_win.toFixed(2)) : 0
+        avg_points: bestPlayer.avg_points ? parseFloat(bestPlayer.avg_points.toFixed(2)) : 0
       } : null
     });
   }
@@ -220,14 +220,14 @@ async function saveSession(request, env, corsHeaders) {
       SUM(gr.points) as total_points,
       SUM(CASE WHEN gr.points > 0 THEN 1 ELSE 0 END) as wins,
       COUNT(gr.id) as games_played,
-      CAST(SUM(gr.points) AS REAL) / NULLIF(SUM(CASE WHEN gr.points > 0 THEN 1 ELSE 0 END), 0) as avg_points_per_win
+      CAST(SUM(gr.points) AS REAL) / COUNT(gr.id) as avg_points
     FROM players p
     JOIN game_results gr ON p.id = gr.player_id
     JOIN games g ON gr.game_id = g.id
     WHERE g.session_id = ?
     GROUP BY p.id, p.name
-    HAVING wins > 0 AND games_played >= 3
-    ORDER BY avg_points_per_win DESC
+    HAVING games_played >= 3
+    ORDER BY avg_points DESC
     LIMIT 1
   `).bind(sessionId).first();
 
@@ -236,7 +236,7 @@ async function saveSession(request, env, corsHeaders) {
     total_points: bestPlayerQuery.total_points,
     wins: bestPlayerQuery.wins,
     games_played: bestPlayerQuery.games_played,
-    avg_points_per_win: bestPlayerQuery.avg_points_per_win ? parseFloat(bestPlayerQuery.avg_points_per_win.toFixed(2)) : 0
+    avg_points: bestPlayerQuery.avg_points ? parseFloat(bestPlayerQuery.avg_points.toFixed(2)) : 0
   } : null;
 
   return new Response(JSON.stringify({
