@@ -233,13 +233,11 @@
                 ? (player.total_points / player.games_played).toFixed(2)
                 : '0.00';
 
-            // Находим лучшую и худшую игру
+            // Находим лучшую игру
             let bestGame = 0;
-            let worstGame = 0;
             if (games.length > 0) {
                 const points = games.map(g => g.points);
                 bestGame = Math.max(...points);
-                worstGame = Math.min(...points);
             }
 
             let html = `
@@ -269,10 +267,6 @@
                     <div class="stat-card">
                         <div class="stat-value">${bestGame > 0 ? '+' : ''}${bestGame}</div>
                         <div class="stat-label">Лучшая игра</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${worstGame < 0 ? '' : '+'}${worstGame}</div>
-                        <div class="stat-label">Худшая игра</div>
                     </div>
                 </div>
             `;
