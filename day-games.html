@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игры дня - MafClub.biz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .page-header .date {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .game-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .winner-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .winner-civilian {
+            background: rgba(74, 222, 128, 0.3);
+            border: 2px solid #4ade80;
+        }
+
+        .winner-mafia {
+            background: rgba(248, 113, 113, 0.3);
+            border: 2px solid #f87171;
+        }
+
+        .bonus-badges {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .bonus-badge {
+            padding: 5px 12px;
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .players-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .players-table th,
+        .players-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .players-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .players-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .role-civilian {
+            background: rgba(74, 222, 128, 0.2);
+            border: 1px solid #4ade80;
+        }
+
+        .role-mafia {
+            background: rgba(248, 113, 113, 0.2);
+            border: 1px solid #f87171;
+        }
+
+        .role-don {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid #fbbf24;
+        }
+
+        .role-sheriff {
+            background: rgba(96, 165, 250, 0.2);
+            border: 1px solid #60a5fa;
+        }
+
+        .points-positive {
+            color: #4ade80;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .points-negative {
+            color: #f87171;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .points-zero {
+            opacity: 0.6;
+            font-size: 1.2rem;
+        }
+
+        .achievements-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .achievements-list li {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 2px;
+            background: rgba(251, 191, 36, 0.2);
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #f87171;
+            font-size: 1.2rem;
+        }
+
+        .death-time {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 1.5rem;
+            }
+
+            .players-table {
+                font-size: 0.85rem;
+            }
+
+            .players-table th,
+            .players-table td {
+                padding: 10px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="day-stats.html" class="back-link">← Назад к статистике по дням</a>
+
+        <div class="page-header">
+            <h1>🎮 Игры дня</h1>
+            <div class="date" id="page-date"></div>
+        </div>
+
+        <div id="content">
+            <div class="loading">Загрузка игр дня...</div>
+        </div>
+    </div>
+
+    <script>
+        function formatDeathTime(deathTime) {
+            if (deathTime === '0') {
+                return '✅ Жив';
+            }
+
+            const match = deathTime.match(/^(\d+)([DN])$/);
+            if (!match) {
+                return deathTime;
+            }
+
+            const number = parseInt(match[1]);
+            const type = match[2];
+
+            const numberWords = {
+                1: 'первый', 2: 'второй', 3: 'третий', 4: 'четвёртый',
+                5: 'пятый', 6: 'шестой', 7: 'седьмой', 8: 'восьмой',
+                9: 'девятый', 10: 'десятый'
+            };
+
+            if (type === 'N') {
+                const nightWords = {
+                    1: 'первая', 2: 'вторая', 3: 'третья', 4: 'четвёртая',
+                    5: 'пятая', 6: 'шестая', 7: 'седьмая', 8: 'восьмая',
+                    9: 'девятая', 10: 'десятая'
+                };
+                return `${nightWords[number] || number} ночь`;
+            }
+
+            return `${numberWords[number] || number} день`;
+        }
+
+        async function loadDayGames() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const date = urlParams.get('date');
+
+            if (!date) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        ⚠️ Дата не указана
+                    </div>
+                `;
+                return;
+            }
+
+            // Форматируем дату для заголовка
+            const dateObj = new Date(date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('page-date').textContent = formattedDate;
+
+            try {
+                const response = await fetch(`/api/day-games?date=${date}`);
+
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить данные игр');
+                }
+
+                const data = await response.json();
+                displayDayGames(data);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        ⚠️ Ошибка загрузки данных: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayDayGames(data) {
+            if (!data.games || data.games.length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        ⚠️ Нет игр за этот день
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            data.games.forEach(({ game, players }) => {
+                const winnerClass = game.winner === 'Мирные' ? 'winner-civilian' : 'winner-mafia';
+
+                let bonusBadges = '';
+                if (game.is_clean_win) {
+                    bonusBadges += '<span class="bonus-badge">🏆 Чистая победа</span>';
+                }
+                if (game.is_dry_win) {
+                    bonusBadges += '<span class="bonus-badge">💧 Победа в сухую</span>';
+                }
+
+                html += `
+                    <div class="game-card">
+                        <div class="game-title">🎮 Игра #${game.game_number}</div>
+                        <div class="game-info">
+                            <div class="info-item">
+                                <div class="info-label">Победитель</div>
+                                <div class="info-value">
+                                    <span class="winner-badge ${winnerClass}">
+                                        ${game.winner === 'Мирные' ? '🏡' : '🔫'} ${game.winner}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        ${bonusBadges ? `<div class="bonus-badges">${bonusBadges}</div>` : ''}
+
+                        <table class="players-table">
+                            <thead>
+                                <tr>
+                                    <th>Игрок</th>
+                                    <th>Роль</th>
+                                    <th>Убит</th>
+                                    <th>Очки</th>
+                                    <th>Достижения</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                players.forEach(player => {
+                    let roleClass = 'role-civilian';
+                    if (player.role === 'Мафия') roleClass = 'role-mafia';
+                    else if (player.role === 'Дон') roleClass = 'role-don';
+                    else if (player.role === 'Шериф') roleClass = 'role-sheriff';
+
+                    const pointsClass = player.points > 0 ? 'points-positive' :
+                                       player.points < 0 ? 'points-negative' : 'points-zero';
+
+                    const deathText = formatDeathTime(player.death_time);
+
+                    let achievementsHtml = '';
+                    if (player.achievements && player.achievements.length > 0) {
+                        achievementsHtml = '<ul class="achievements-list">';
+                        player.achievements.forEach(ach => {
+                            achievementsHtml += `<li>${ach}</li>`;
+                        });
+                        achievementsHtml += '</ul>';
+                    } else {
+                        achievementsHtml = '<span style="opacity: 0.5;">—</span>';
+                    }
+
+                    html += `
+                        <tr>
+                            <td class="player-name">${player.player_name}</td>
+                            <td><span class="role-badge ${roleClass}">${player.role}</span></td>
+                            <td class="death-time">${deathText}</td>
+                            <td class="${pointsClass}">${player.points > 0 ? '+' : ''}${player.points}</td>
+                            <td>${achievementsHtml}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // Загружаем данные при загрузке страницы
+        window.onload = loadDayGames;
+    </script>
+
+    <a href="login.html" style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.5'">
+        v1.6.0
+    </a>
+</body>
+</html>

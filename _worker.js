@@ -61,6 +61,18 @@ async function handleAPI(request, env, url) {
       return await getGameDetails(env, corsHeaders, gameMatch[1]);
     }
 
+    // GET /api/day-games?date=YYYY-MM-DD - все игры за день
+    if (url.pathname === '/api/day-games' && request.method === 'GET') {
+      const date = url.searchParams.get('date');
+      if (!date) {
+        return new Response(JSON.stringify({ error: 'Date parameter required' }), {
+          status: 400,
+          headers: corsHeaders
+        });
+      }
+      return await getDayGames(env, corsHeaders, date);
+    }
+
     return new Response(JSON.stringify({ error: 'Not Found' }), {
       status: 404,
       headers: corsHeaders
@@ -412,6 +424,81 @@ async function getGameDetails(env, corsHeaders, gameId) {
       is_dry_win: game.is_dry_win === 1
     },
     players: players
+  }), {
+    status: 200,
+    headers: corsHeaders
+  });
+}
+
+// Получить все игры за конкретный день
+async function getDayGames(env, corsHeaders, date) {
+  const db = env.DB;
+
+  // Получаем все игры за этот день
+  const games = await db.prepare(`
+    SELECT
+      g.id,
+      g.game_number,
+      g.winner,
+      g.is_clean_win,
+      g.is_dry_win,
+      gs.date
+    FROM games g
+    JOIN game_sessions gs ON g.session_id = gs.id
+    WHERE gs.date = ?
+    ORDER BY g.game_number ASC
+  `).bind(date).all();
+
+  if (!games.results || games.results.length === 0) {
+    return new Response(JSON.stringify({
+      error: 'No games found for this date'
+    }), {
+      status: 404,
+      headers: corsHeaders
+    });
+  }
+
+  // Для каждой игры получаем результаты игроков
+  const gamesWithPlayers = [];
+
+  for (const game of games.results) {
+    const results = await db.prepare(`
+      SELECT
+        gr.id,
+        p.id as player_id,
+        p.name as player_name,
+        gr.role,
+        gr.death_time,
+        gr.is_alive,
+        gr.points,
+        gr.black_checks,
+        gr.red_checks,
+        gr.achievements
+      FROM game_results gr
+      JOIN players p ON gr.player_id = p.id
+      WHERE gr.game_id = ?
+      ORDER BY gr.points DESC
+    `).bind(game.id).all();
+
+    const players = results.results.map(r => ({
+      ...r,
+      achievements: r.achievements ? JSON.parse(r.achievements) : []
+    }));
+
+    gamesWithPlayers.push({
+      game: {
+        ...game,
+        is_clean_win: game.is_clean_win === 1,
+        is_dry_win: game.is_dry_win === 1
+      },
+      players: players
+    });
+  }
+
+  return new Response(JSON.stringify({
+    success: true,
+    date: date,
+    games: gamesWithPlayers
   }), {
     status: 200,
     headers: corsHeaders
