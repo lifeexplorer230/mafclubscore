@@ -215,6 +215,67 @@
 
     <script src="rating_calculator.js"></script>
     <script>
+        // 🔐 Проверка авторизации
+        (async function checkAuth() {
+            const token = localStorage.getItem('maf_auth_token');
+
+            if (!token) {
+                // Токена нет, редирект на логин
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Проверяем токен
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+
+                const result = await response.json();
+
+                if (!result.valid) {
+                    // Токен недействителен
+                    localStorage.removeItem('maf_auth_token');
+                    localStorage.removeItem('maf_username');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Показываем имя пользователя в шапке
+                const username = localStorage.getItem('maf_username') || result.username;
+                const header = document.querySelector('.header h1');
+                if (header) {
+                    header.innerHTML = `📝 Ввод игр <span style="font-size: 0.6em; opacity: 0.8;">(${username})</span>`;
+                }
+
+                // Добавляем кнопку выхода
+                const backLink = document.querySelector('.back-link');
+                if (backLink) {
+                    const logoutBtn = document.createElement('a');
+                    logoutBtn.href = '#';
+                    logoutBtn.className = 'back-link';
+                    logoutBtn.style.marginLeft = '10px';
+                    logoutBtn.textContent = '🚪 Выйти';
+                    logoutBtn.onclick = function(e) {
+                        e.preventDefault();
+                        localStorage.removeItem('maf_auth_token');
+                        localStorage.removeItem('maf_username');
+                        window.location.href = 'login.html';
+                    };
+                    backLink.parentNode.insertBefore(logoutBtn, backLink.nextSibling);
+                }
+
+            } catch (error) {
+                console.error('Auth check error:', error);
+                // В случае ошибки редиректим на логин
+                window.location.href = 'login.html';
+            }
+        })();
+
         let totalGames = 0;
         let gamesData = [];
 
