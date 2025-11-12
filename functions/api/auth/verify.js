@@ -1,7 +1,51 @@
 // API endpoint: POST /api/auth/verify
 // Проверка действительности JWT токена
 
-import { verifyJWT } from './login.js';
+const JWT_SECRET = 'maf-club-secret-key-2025-showtime-unnatov';
+
+// Проверка JWT токена (дубликат из login.js)
+async function verifyJWT(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const [base64Header, base64Payload, base64Signature] = parts;
+    const unsignedToken = `${base64Header}.${base64Payload}`;
+
+    // Проверяем подпись
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(JWT_SECRET),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+
+    const signature = Uint8Array.from(atob(base64Signature), c => c.charCodeAt(0));
+    const isValid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signature,
+      encoder.encode(unsignedToken)
+    );
+
+    if (!isValid) return null;
+
+    // Декодируем payload
+    const payload = JSON.parse(atob(base64Payload));
+
+    // Проверяем срок действия
+    if (payload.exp && payload.exp < Date.now()) {
+      return null; // Токен истёк
+    }
+
+    return payload;
+  } catch (error) {
+    console.error('JWT verification error:', error);
+    return null;
+  }
+}
 
 export async function onRequestPost(context) {
   const { request } = context;

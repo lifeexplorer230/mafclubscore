@@ -41,8 +41,8 @@ async function createJWT(payload) {
   return `${unsignedToken}.${base64Signature}`;
 }
 
-// Проверка JWT токена
-export async function verifyJWT(token) {
+// Проверка JWT токена (не используется в этом файле, но оставлена для справки)
+async function verifyJWT(token) {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
