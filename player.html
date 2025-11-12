@@ -212,61 +212,94 @@
         }
 
         function displayPlayerStats(stats) {
+            // API возвращает {player: {...}, games: [...]}
+            const player = stats.player;
+            const games = stats.games || [];
+
+            // Вычисляем статистику
+            const avgPoints = player.games_played > 0
+                ? (player.total_points / player.games_played).toFixed(2)
+                : '0.00';
+
+            // Находим лучшую и худшую игру
+            let bestGame = 0;
+            let worstGame = 0;
+            if (games.length > 0) {
+                const points = games.map(g => g.points);
+                bestGame = Math.max(...points);
+                worstGame = Math.min(...points);
+            }
+
             let html = `
                 <div class="player-header">
-                    <div class="player-name">👤 ${stats.name}</div>
+                    <div class="player-name">👤 ${player.name}</div>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value">${stats.overall.games_played}</div>
+                        <div class="stat-value">${player.games_played || 0}</div>
                         <div class="stat-label">Игр</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value ${stats.overall.total_points > 0 ? 'points-positive' : stats.overall.total_points < 0 ? 'points-negative' : ''}">
-                            ${stats.overall.total_points > 0 ? '+' : ''}${stats.overall.total_points}
+                        <div class="stat-value ${player.total_points > 0 ? 'points-positive' : player.total_points < 0 ? 'points-negative' : ''}">
+                            ${player.total_points > 0 ? '+' : ''}${player.total_points || 0}
                         </div>
                         <div class="stat-label">Всего очков</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.overall.avg_points.toFixed(2)}</div>
+                        <div class="stat-value">${avgPoints}</div>
                         <div class="stat-label">Средний балл</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value points-positive">${stats.overall.wins}</div>
+                        <div class="stat-value points-positive">${player.wins || 0}</div>
                         <div class="stat-label">Побед</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.overall.best_game}</div>
+                        <div class="stat-value">${bestGame > 0 ? '+' : ''}${bestGame}</div>
                         <div class="stat-label">Лучшая игра</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">${stats.overall.worst_game}</div>
+                        <div class="stat-value">${worstGame < 0 ? '' : '+'}${worstGame}</div>
                         <div class="stat-label">Худшая игра</div>
                     </div>
                 </div>
             `;
 
-            // Статистика по ролям
-            if (stats.by_role && stats.by_role.length > 0) {
+            // Вычисляем статистику по ролям на клиенте
+            const roleStats = {};
+            games.forEach(game => {
+                if (!roleStats[game.role]) {
+                    roleStats[game.role] = {
+                        games_count: 0,
+                        total_points: 0
+                    };
+                }
+                roleStats[game.role].games_count++;
+                roleStats[game.role].total_points += game.points;
+            });
+
+            const roles = Object.keys(roleStats);
+            if (roles.length > 0) {
                 html += `
                     <div class="section">
                         <div class="section-title">📊 Статистика по ролям</div>
                         <div class="role-stats">
                 `;
 
-                stats.by_role.forEach(role => {
+                roles.forEach(roleName => {
+                    const role = roleStats[roleName];
+                    const avgPoints = (role.total_points / role.games_count).toFixed(2);
                     html += `
                         <div class="role-item">
                             <div>
-                                <div class="role-name">${role.role}</div>
+                                <div class="role-name">${roleName}</div>
                                 <div>${role.games_count} ${role.games_count === 1 ? 'игра' : role.games_count < 5 ? 'игры' : 'игр'}</div>
                             </div>
                             <div class="role-info">
                                 <div class="${role.total_points > 0 ? 'points-positive' : role.total_points < 0 ? 'points-negative' : ''}">
                                     ${role.total_points > 0 ? '+' : ''}${role.total_points} очков
                                 </div>
-                                <div>среднее: ${role.avg_points.toFixed(2)}</div>
+                                <div>среднее: ${avgPoints}</div>
                             </div>
                         </div>
                     `;
@@ -279,7 +312,7 @@
             }
 
             // Последние игры
-            if (stats.recent_games && stats.recent_games.length > 0) {
+            if (games && games.length > 0) {
                 html += `
                     <div class="section">
                         <div class="section-title">🎮 Последние игры</div>
@@ -296,14 +329,16 @@
                             <tbody>
                 `;
 
-                stats.recent_games.forEach(game => {
+                games.forEach(game => {
                     const pointsClass = game.points > 0 ? 'points-positive' :
                                        game.points < 0 ? 'points-negative' : '';
 
+                    const dateFormatted = new Date(game.date).toLocaleDateString('ru-RU');
+
                     html += `
                         <tr>
-                            <td>${game.session_date}</td>
-                            <td>#${game.game_number}</td>
+                            <td>${dateFormatted}</td>
+                            <td>#${game.game_number || 1}</td>
                             <td>${game.role}</td>
                             <td>${game.winner === 'Мирные' ? '🏡' : '🔫'} ${game.winner}</td>
                             <td class="${pointsClass}">${game.points > 0 ? '+' : ''}${game.points}</td>
@@ -326,7 +361,7 @@
     </script>
 
     <a href="login.html" style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.5'">
-        v1.1.0
+        v1.1.2
     </a>
 </body>
 </html>
