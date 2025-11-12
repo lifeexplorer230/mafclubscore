@@ -15,6 +15,8 @@ export default async function handler(request, response) {
   const { query, body, method } = request;
   const path = request.query.path ? `/${request.query.path.join('/')}` : '/';
 
+  console.log('API Request:', { method, path, query: request.query });
+
   // CORS headers
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
