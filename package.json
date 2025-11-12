@@ -7,7 +7,11 @@
     "dev": "vercel dev",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
-    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage"
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:all": "npm test && npm run test:e2e"
   },
   "keywords": [
     "mafia",
@@ -25,6 +29,8 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
+    "@playwright/test": "^1.56.1",
+    "@testing-library/dom": "^10.4.1",
     "jest": "^30.2.0"
   }
 }
