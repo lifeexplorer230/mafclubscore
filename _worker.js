@@ -34,6 +34,11 @@ async function handleAPI(request, env, url) {
       return await getDayStats(env, corsHeaders);
     }
 
+    // GET /api/players-list - список всех игроков для автодополнения
+    if (url.pathname === '/api/players-list' && request.method === 'GET') {
+      return await getPlayersList(env, corsHeaders);
+    }
+
     // POST /api/sessions - сохранение сессии
     if (url.pathname === '/api/sessions' && request.method === 'POST') {
       return await saveSession(request, env, corsHeaders);
@@ -307,6 +312,25 @@ async function getPlayer(env, corsHeaders, playerId) {
     success: true,
     player: player,
     games: games.results
+  }), {
+    status: 200,
+    headers: corsHeaders
+  });
+}
+
+// Получить список всех игроков (для автодополнения)
+async function getPlayersList(env, corsHeaders) {
+  const db = env.DB;
+
+  const players = await db.prepare(`
+    SELECT id, name
+    FROM players
+    ORDER BY name ASC
+  `).all();
+
+  return new Response(JSON.stringify({
+    success: true,
+    players: players.results
   }), {
     status: 200,
     headers: corsHeaders

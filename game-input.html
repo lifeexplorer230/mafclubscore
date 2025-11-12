@@ -78,6 +78,44 @@
             background: rgba(255, 255, 255, 0.9);
             color: #333;
             font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input.existing-player {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+        }
+
+        .form-group input.new-player {
+            background: rgba(251, 191, 36, 0.2);
+            border: 2px solid #fbbf24;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .autocomplete-item:hover {
+            background: #f3f4f6;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
         }
 
         .btn {
@@ -139,6 +177,10 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
+        }
+
+        .name-input-wrapper {
+            position: relative;
         }
 
         .hidden {
@@ -299,7 +341,10 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Имя:</label>
-                                <input type="text" id="g1_p${p}_name" placeholder="Введите имя" required>
+                                <div class="name-input-wrapper">
+                                    <input type="text" id="g1_p${p}_name" class="player-name-input" placeholder="Введите имя" required autocomplete="off">
+                                    <div id="g1_p${p}_autocomplete" class="autocomplete-list"></div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Роль:</label>
@@ -312,7 +357,23 @@
                             </div>
                             <div class="form-group">
                                 <label>Когда убит:</label>
-                                <input type="text" id="g1_p${p}_death" placeholder="0 / 1D / 2N" value="0">
+                                <select id="g1_p${p}_death">
+                                    <option value="0">0 (Жив)</option>
+                                    <option value="1N">1N (Ночь 1)</option>
+                                    <option value="1D">1D (День 1)</option>
+                                    <option value="2N">2N (Ночь 2)</option>
+                                    <option value="2D">2D (День 2)</option>
+                                    <option value="3N">3N (Ночь 3)</option>
+                                    <option value="3D">3D (День 3)</option>
+                                    <option value="4N">4N (Ночь 4)</option>
+                                    <option value="4D">4D (День 4)</option>
+                                    <option value="5N">5N (Ночь 5)</option>
+                                    <option value="5D">5D (День 5)</option>
+                                    <option value="6N">6N (Ночь 6)</option>
+                                    <option value="6D">6D (День 6)</option>
+                                    <option value="7N">7N (Ночь 7)</option>
+                                    <option value="7D">7D (День 7)</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -330,10 +391,112 @@
 
             gameSection.innerHTML = html;
             container.appendChild(gameSection);
+
+            // Загружаем список игроков и настраиваем автодополнение
+            loadPlayersAndSetupAutocomplete();
+        }
+
+        let allPlayers = []; // Список всех игроков из базы
+
+        async function loadPlayersAndSetupAutocomplete() {
+            try {
+                // Загружаем список всех игроков
+                const response = await fetch('/api/players-list');
+                if (response.ok) {
+                    const data = await response.json();
+                    allPlayers = data.players || [];
+                    console.log('Загружено игроков:', allPlayers.length);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки игроков:', error);
+            }
+
+            // Настраиваем автодополнение для всех полей с именами
+            for (let p = 1; p <= 10; p++) {
+                const input = document.getElementById(`g1_p${p}_name`);
+                const autocompleteDiv = document.getElementById(`g1_p${p}_autocomplete`);
+
+                if (input && autocompleteDiv) {
+                    setupAutocomplete(input, autocompleteDiv);
+                }
+            }
+        }
+
+        function setupAutocomplete(input, autocompleteDiv) {
+            input.addEventListener('input', function() {
+                const value = this.value.toLowerCase().trim();
+
+                // Очищаем список
+                autocompleteDiv.innerHTML = '';
+                autocompleteDiv.style.display = 'none';
+
+                if (value.length < 2) {
+                    // Если меньше 2 символов - убираем подсветку
+                    input.classList.remove('existing-player', 'new-player');
+                    return;
+                }
+
+                // Ищем совпадения
+                const matches = allPlayers.filter(p =>
+                    p.name.toLowerCase().includes(value)
+                );
+
+                // Проверяем точное совпадение
+                const exactMatch = allPlayers.find(p =>
+                    p.name.toLowerCase() === value
+                );
+
+                if (exactMatch) {
+                    // Точное совпадение - зелёный
+                    input.classList.remove('new-player');
+                    input.classList.add('existing-player');
+                } else {
+                    // Нет точного совпадения - жёлтый (новый игрок)
+                    input.classList.remove('existing-player');
+                    input.classList.add('new-player');
+                }
+
+                // Показываем автодополнение
+                if (matches.length > 0 && !exactMatch) {
+                    matches.slice(0, 5).forEach(player => {
+                        const item = document.createElement('div');
+                        item.className = 'autocomplete-item';
+                        item.textContent = player.name;
+                        item.onclick = function() {
+                            input.value = player.name;
+                            input.classList.remove('new-player');
+                            input.classList.add('existing-player');
+                            autocompleteDiv.style.display = 'none';
+                        };
+                        autocompleteDiv.appendChild(item);
+                    });
+                    autocompleteDiv.style.display = 'block';
+                }
+            });
+
+            // Скрываем автодополнение при клике вне поля
+            document.addEventListener('click', function(e) {
+                if (e.target !== input) {
+                    autocompleteDiv.style.display = 'none';
+                }
+            });
         }
 
         async function saveGame() {
             try {
+                // Проверяем на дубликаты имён
+                const names = [];
+                for (let p = 1; p <= 10; p++) {
+                    const name = document.getElementById(`g1_p${p}_name`).value.trim();
+                    if (name) {
+                        if (names.includes(name.toLowerCase())) {
+                            alert(`❌ Ошибка: Игрок "${name}" указан дважды!\n\nВ одной игре не может быть двух игроков с одинаковыми именами.`);
+                            return;
+                        }
+                        names.push(name.toLowerCase());
+                    }
+                }
+
                 // Собираем данные игры
                 const gameData = collectGameData(1);
                 if (!gameData) {
@@ -449,7 +612,7 @@
     </script>
 
     <a href="rating.html" style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.5'">
-        v1.0.9
+        v1.1.0
     </a>
 </body>
 </html>
