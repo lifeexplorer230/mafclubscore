@@ -173,6 +173,67 @@
             color: #f87171;
             font-size: 1.2rem;
         }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-scroll-hint {
+            display: none;
+            text-align: center;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .player-name {
+                font-size: 2rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .recent-games-table {
+                font-size: 0.85rem;
+            }
+
+            .recent-games-table th,
+            .recent-games-table td {
+                padding: 8px 4px;
+            }
+
+            /* Скрываем колонку "Дата" на мобильных */
+            .hide-mobile {
+                display: none;
+            }
+
+            .mobile-scroll-hint {
+                display: block;
+            }
+        }
+
+        /* Для очень узких экранов */
+        @media (max-width: 360px) {
+            .recent-games-table {
+                font-size: 0.75rem;
+            }
+
+            .recent-games-table th,
+            .recent-games-table td {
+                padding: 6px 3px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -333,17 +394,18 @@
                 html += `
                     <div class="section">
                         <div class="section-title">🎮 Последние игры</div>
-                        <table class="recent-games-table">
-                            <thead>
-                                <tr>
-                                    <th>Дата</th>
-                                    <th>Игра</th>
-                                    <th>Роль</th>
-                                    <th>Результат</th>
-                                    <th>Очки</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <div class="table-wrapper">
+                            <table class="recent-games-table">
+                                <thead>
+                                    <tr>
+                                        <th class="hide-mobile">Дата</th>
+                                        <th>Игра</th>
+                                        <th>Роль</th>
+                                        <th>Результат</th>
+                                        <th>Очки</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                 `;
 
                 games.forEach(game => {
@@ -354,7 +416,7 @@
 
                     html += `
                         <tr>
-                            <td><a href="day-stats.html" class="clickable-link">${dateFormatted}</a></td>
+                            <td class="hide-mobile"><a href="day-stats.html" class="clickable-link">${dateFormatted}</a></td>
                             <td><a href="game-details.html?id=${game.game_id}" class="clickable-link">#${game.game_number || 1}</a></td>
                             <td>${game.role}</td>
                             <td>${game.winner === 'Мирные' ? '🏡' : '🔫'} ${game.winner}</td>
@@ -364,8 +426,10 @@
                 });
 
                 html += `
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                            <div class="mobile-scroll-hint">← Свайп для прокрутки →</div>
+                        </div>
                     </div>
                 `;
             }
