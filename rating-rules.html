@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Как работает рейтинг - MafClub.biz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .role-header {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-points {
+            list-style: none;
+            padding-left: 20px;
+        }
+
+        .role-points li {
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .role-points li:before {
+            content: "→";
+            position: absolute;
+            left: -20px;
+            color: #4ade80;
+        }
+
+        .bonus-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(74, 222, 128, 0.2);
+            border: 1px solid #4ade80;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .penalty-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(248, 113, 113, 0.2);
+            border: 1px solid #f87171;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .max-points {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .example-box {
+            background: rgba(74, 222, 128, 0.1);
+            border: 2px solid #4ade80;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .example-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4ade80;
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .highlight {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: rgba(96, 165, 250, 0.1);
+            border-left: 4px solid #60a5fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="rating.html" class="back-link">← Назад к рейтингу</a>
+
+        <div class="header">
+            <h1>📖 Как работает рейтинг</h1>
+            <p>MafClub.biz</p>
+        </div>
+
+        <!-- Общая информация -->
+        <div class="section">
+            <div class="section-title">💡 Что такое рейтинг?</div>
+            <p><strong>Рейтинг игрока</strong> — это сумма всех очков, заработанных за все игры.</p>
+            <p style="margin-top: 15px;"><strong>Средний балл</strong> = Всего очков ÷ Количество игр</p>
+            <p style="margin-top: 15px;">Чем больше очков — тем выше место в рейтинге!</p>
+        </div>
+
+        <!-- Начисление очков -->
+        <div class="section">
+            <div class="section-title">🎯 Начисление очков по ролям</div>
+
+            <!-- Мирный -->
+            <div class="role-card">
+                <div class="role-header">🏡 МИРНЫЙ</div>
+                <ul class="role-points">
+                    <li><strong>+4 очка</strong> — за победу мирных</li>
+                    <li><strong>+1 очко</strong> — за чистую победу <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+2 очка</strong> — за угадайку <span class="bonus-badge">бонус</span></li>
+                </ul>
+                <div class="max-points">⭐ Максимум: 7 очков</div>
+            </div>
+
+            <!-- Мафия -->
+            <div class="role-card">
+                <div class="role-header">🔫 МАФИЯ</div>
+                <ul class="role-points">
+                    <li><strong>+5 очков</strong> — за победу мафии</li>
+                    <li><strong>+1 очко</strong> — за победу в сухую <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+3 очка</strong> — за угадайку <span class="bonus-badge">бонус</span></li>
+                </ul>
+                <div class="max-points">⭐ Максимум: 9 очков</div>
+            </div>
+
+            <!-- Дон -->
+            <div class="role-card">
+                <div class="role-header">👑 ДОН</div>
+                <ul class="role-points">
+                    <li><strong>+5 очков</strong> — за победу мафии (базовые)</li>
+                    <li><strong>+3 очка</strong> — за роль Дона</li>
+                    <li><strong>+1 очко</strong> — если не покидал стола (жив) <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+1 очко</strong> — за победу в сухую <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+3 очка</strong> — за угадайку <span class="bonus-badge">бонус</span></li>
+                    <li><strong>-3 очка</strong> — при поражении <span class="penalty-badge">штраф</span></li>
+                </ul>
+                <div class="max-points">⭐ Максимум: 13 очков | Минимум: -3 очка</div>
+            </div>
+
+            <!-- Шериф -->
+            <div class="role-card">
+                <div class="role-header">🕵️ ШЕРИФ</div>
+                <ul class="role-points">
+                    <li><strong>+4 очка</strong> — за победу мирных (базовые)</li>
+                    <li><strong>+3 очка</strong> — за роль Шерифа</li>
+                    <li><strong>+2 очка</strong> — если не покидал стола (жив) <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+1 очко</strong> — за чистую победу <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+2 очка</strong> — за угадайку <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+3 очка</strong> — за 3 черные проверки <span class="bonus-badge">бонус</span></li>
+                    <li><strong>+2 очка</strong> — за 3 красные проверки <span class="bonus-badge">бонус</span></li>
+                    <li><strong>-3 очка</strong> — при поражении <span class="penalty-badge">штраф</span></li>
+                    <li><strong>-1 очко</strong> — если покинул игру в 1-й или 2-й день <span class="penalty-badge">штраф</span></li>
+                </ul>
+                <div class="max-points">⭐ Максимум: 15 очков | Минимум: -4 очка</div>
+            </div>
+        </div>
+
+        <!-- Специальные бонусы -->
+        <div class="section">
+            <div class="section-title">✨ Специальные бонусы</div>
+
+            <table>
+                <tr>
+                    <th style="width: 40%">Название</th>
+                    <th>Условия</th>
+                </tr>
+                <tr>
+                    <td><strong>🏆 Чистая победа</strong></td>
+                    <td>Все мафии убиты голосованием И ни один мирный не убит голосованием</td>
+                </tr>
+                <tr>
+                    <td><strong>💧 Победа в сухую</strong></td>
+                    <td>Мафия победила И все мафии живы к концу игры</td>
+                </tr>
+                <tr>
+                    <td><strong>🎯 Угадайка</strong></td>
+                    <td>Ровно 3 игрока остались на последнем голосовании</td>
+                </tr>
+                <tr>
+                    <td><strong>🔍 3 черные проверки</strong></td>
+                    <td>Шериф проверил 3 или более мафий/донов</td>
+                </tr>
+                <tr>
+                    <td><strong>🔴 3 красные проверки</strong></td>
+                    <td>Шериф проверил 3 или более мирных</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Лучший игрок дня -->
+        <div class="section">
+            <div class="section-title">🏆 Лучший игрок дня</div>
+
+            <p>Лучший игрок дня определяется по <strong>среднему баллу за выигрыш</strong>:</p>
+
+            <div class="formula">
+                <span class="highlight">Средний балл за выигрыш</span> = Всего очков ÷ Количество выигрышей
+            </div>
+
+            <div class="info-box">
+                <strong>Важно:</strong> Учитываются только игроки, у которых есть хотя бы один выигрыш (wins > 0).
+            </div>
+
+            <div class="example-box">
+                <div class="example-title">📊 Пример:</div>
+                <p><strong>Игрок А:</strong> 3 игры, 2 выигрыша, 15 очков</p>
+                <p style="margin-left: 20px;">→ Средний балл за выигрыш = 15 ÷ 2 = <span class="highlight">7.5</span></p>
+                <br>
+                <p><strong>Игрок Б:</strong> 5 игр, 3 выигрыша, 18 очков</p>
+                <p style="margin-left: 20px;">→ Средний балл за выигрыш = 18 ÷ 3 = <span class="highlight">6.0</span></p>
+                <br>
+                <p><strong>Результат:</strong> Игрок А — лучший игрок дня! (7.5 > 6.0)</p>
+            </div>
+        </div>
+
+        <!-- Примеры расчётов -->
+        <div class="section">
+            <div class="section-title">🧮 Примеры расчётов</div>
+
+            <div class="example-box">
+                <div class="example-title">Пример 1: Дон победил, живой, в сухую</div>
+                <p><strong>Роль:</strong> Дон 👑</p>
+                <p><strong>Результат:</strong> Мафия победила ✅</p>
+                <p><strong>Состояние:</strong> Жив, победа в сухую</p>
+                <br>
+                <p><strong>Расчёт:</strong></p>
+                <p style="margin-left: 20px;">+5 (мафия) +3 (дон) +1 (жив) +1 (в сухую) = <span class="highlight">10 очков</span></p>
+            </div>
+
+            <div class="example-box" style="background: rgba(74, 222, 128, 0.1);">
+                <div class="example-title">Пример 2: Шериф победил, живой, 3 черные проверки</div>
+                <p><strong>Роль:</strong> Шериф 🕵️</p>
+                <p><strong>Результат:</strong> Мирные победили ✅</p>
+                <p><strong>Состояние:</strong> Жив, 3 черные проверки, чистая победа</p>
+                <br>
+                <p><strong>Расчёт:</strong></p>
+                <p style="margin-left: 20px;">+4 (мирные) +3 (шериф) +2 (жив) +1 (чистая) +3 (проверки) = <span class="highlight">13 очков</span></p>
+            </div>
+        </div>
+    </div>
+
+    <a href="login.html" style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.5'">
+        v1.2.0
+    </a>
+</body>
+</html>
