@@ -1,0 +1,47 @@
+{
+  "id": 6,
+  "name": "Федор",
+  "overall": {
+    "games_played": 2,
+    "total_points": 13,
+    "avg_points": 6.5,
+    "wins": 2,
+    "losses": 0,
+    "best_game": 9,
+    "worst_game": 4
+  },
+  "by_role": [
+    {
+      "role": "Шериф",
+      "games_count": 1,
+      "total_points": 9,
+      "avg_points": 9.0
+    },
+    {
+      "role": "Мирный",
+      "games_count": 1,
+      "total_points": 4,
+      "avg_points": 4.0
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": 2,
+      "session_date": "2025-11-12",
+      "game_number": 2,
+      "role": "Мирный",
+      "points": 4,
+      "winner": "Мирные",
+      "is_alive": 1
+    },
+    {
+      "game_id": 1,
+      "session_date": "2025-11-12",
+      "game_number": 1,
+      "role": "Шериф",
+      "points": 9,
+      "winner": "Мирные",
+      "is_alive": 1
+    }
+  ]
+}

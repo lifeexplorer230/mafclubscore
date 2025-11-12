@@ -1,0 +1,47 @@
+{
+  "id": 7,
+  "name": "Григорий",
+  "overall": {
+    "games_played": 2,
+    "total_points": -3,
+    "avg_points": -1.5,
+    "wins": 0,
+    "losses": 1,
+    "best_game": 0,
+    "worst_game": -3
+  },
+  "by_role": [
+    {
+      "role": "Мафия",
+      "games_count": 1,
+      "total_points": 0,
+      "avg_points": 0.0
+    },
+    {
+      "role": "Дон",
+      "games_count": 1,
+      "total_points": -3,
+      "avg_points": -3.0
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": 2,
+      "session_date": "2025-11-12",
+      "game_number": 2,
+      "role": "Дон",
+      "points": -3,
+      "winner": "Мирные",
+      "is_alive": 0
+    },
+    {
+      "game_id": 1,
+      "session_date": "2025-11-12",
+      "game_number": 1,
+      "role": "Мафия",
+      "points": 0,
+      "winner": "Мирные",
+      "is_alive": 0
+    }
+  ]
+}

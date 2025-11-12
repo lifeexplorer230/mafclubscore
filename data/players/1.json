@@ -1,0 +1,32 @@
+{
+  "id": 1,
+  "name": "2",
+  "overall": {
+    "games_played": 1,
+    "total_points": 4,
+    "avg_points": 4.0,
+    "wins": 1,
+    "losses": 0,
+    "best_game": 4,
+    "worst_game": 4
+  },
+  "by_role": [
+    {
+      "role": "Мирный",
+      "games_count": 1,
+      "total_points": 4,
+      "avg_points": 4.0
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": 1,
+      "session_date": "2025-11-12",
+      "game_number": 1,
+      "role": "Мирный",
+      "points": 4,
+      "winner": "Мирные",
+      "is_alive": 1
+    }
+  ]
+}

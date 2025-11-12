@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг игроков - МАФ-Клуб</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .rating-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .rating-table th,
+        .rating-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rating-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .rating-table tbody tr {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .rating-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .rank-cell {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #fbbf24;
+            width: 60px;
+            text-align: center;
+        }
+
+        .rank-1 { color: #ffd700; font-size: 1.5rem; }
+        .rank-2 { color: #c0c0c0; font-size: 1.4rem; }
+        .rank-3 { color: #cd7f32; font-size: 1.3rem; }
+
+        .player-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .points-positive {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .points-negative {
+            color: #f87171;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #f87171;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .rating-table {
+                font-size: 0.9rem;
+            }
+
+            .rating-table th,
+            .rating-table td {
+                padding: 10px 5px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Главная</a>
+
+        <div class="header">
+            <h1>🏆 Рейтинг игроков</h1>
+            <p>МАФ-Клуб «SHOWTIME»</p>
+        </div>
+
+        <div id="content">
+            <div class="loading">Загрузка рейтинга...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadRating() {
+            try {
+                // Пробуем загрузить из API
+                let response = await fetch('/api/rating');
+
+                // Если API недоступен, пробуем загрузить из локального JSON
+                if (!response.ok) {
+                    console.log('API недоступен, загружаем из data/rating.json');
+                    response = await fetch('data/rating.json');
+                }
+
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить данные');
+                }
+
+                const rating = await response.json();
+                displayRating(rating);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        ⚠️ Ошибка загрузки данных: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayRating(rating) {
+            if (!rating || rating.length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        📊 Пока нет данных для отображения
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table class="rating-table">
+                    <thead>
+                        <tr>
+                            <th>Место</th>
+                            <th>Игрок</th>
+                            <th>Игр</th>
+                            <th>Очки</th>
+                            <th>Среднее</th>
+                            <th>Побед</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            rating.forEach(player => {
+                const rankClass = player.rank <= 3 ? `rank-${player.rank}` : '';
+                const pointsClass = player.total_points > 0 ? 'points-positive' :
+                                   player.total_points < 0 ? 'points-negative' : '';
+
+                html += `
+                    <tr onclick="openPlayer(${player.id})">
+                        <td class="rank-cell ${rankClass}">${player.rank}</td>
+                        <td class="player-name">${player.name}</td>
+                        <td>${player.games_played}</td>
+                        <td class="${pointsClass}">${player.total_points > 0 ? '+' : ''}${player.total_points}</td>
+                        <td>${player.avg_points.toFixed(2)}</td>
+                        <td>${player.wins}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function openPlayer(playerId) {
+            window.location.href = `player.html?id=${playerId}`;
+        }
+
+        // Загружаем рейтинг при загрузке страницы
+        window.onload = loadRating;
+    </script>
+</body>
+</html>

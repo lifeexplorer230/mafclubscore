@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ввод игр - МАФ-Клуб</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background: #4ade80;
+            border-color: #4ade80;
+            color: #1a1a1a;
+        }
+
+        .btn-primary:hover {
+            background: #22c55e;
+        }
+
+        .game-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .game-header {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .player-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #fbbf24;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .success-message {
+            background: #4ade80;
+            color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            background: #f87171;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Главная</a>
+
+        <div class="header">
+            <h1>🎮 Ввод результатов игр</h1>
+            <p>МАФ-Клуб «SHOWTIME»</p>
+        </div>
+
+        <!-- Шаг 1: Количество игр -->
+        <div id="step1" class="section">
+            <div class="form-group">
+                <label for="totalGames">Сколько игр будет сыграно за игровой день?</label>
+                <input type="number" id="totalGames" min="1" max="10" value="4">
+            </div>
+            <button class="btn btn-primary" onclick="startGames()">Начать ввод игр</button>
+        </div>
+
+        <!-- Шаг 2: Ввод игр -->
+        <div id="step2" class="hidden">
+            <div id="gamesContainer"></div>
+
+            <div class="section">
+                <button class="btn btn-primary" onclick="saveSession()">💾 Сохранить все игры</button>
+                <button class="btn" onclick="resetForm()">🔄 Начать заново</button>
+            </div>
+        </div>
+
+        <div id="loading" class="hidden">
+            <p>Сохранение данных...</p>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="rating_calculator.js"></script>
+    <script>
+        let totalGames = 0;
+        let gamesData = [];
+
+        function startGames() {
+            totalGames = parseInt(document.getElementById('totalGames').value);
+
+            if (totalGames < 1 || totalGames > 10) {
+                alert('Количество игр должно быть от 1 до 10');
+                return;
+            }
+
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+
+            generateGameForms();
+        }
+
+        function generateGameForms() {
+            const container = document.getElementById('gamesContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= totalGames; i++) {
+                const gameSection = document.createElement('div');
+                gameSection.className = 'game-section';
+                gameSection.id = `game-${i}`;
+
+                let html = `
+                    <div class="game-header">🎮 Игра ${i} из ${totalGames}</div>
+                `;
+
+                // 10 игроков
+                for (let p = 1; p <= 10; p++) {
+                    html += `
+                        <div class="player-card">
+                            <div class="player-header">Игрок ${p}</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Имя:</label>
+                                    <input type="text" id="g${i}_p${p}_name" placeholder="Введите имя" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Роль:</label>
+                                    <select id="g${i}_p${p}_role">
+                                        <option value="Мирный">Мирный</option>
+                                        <option value="Шериф">Шериф</option>
+                                        <option value="Мафия">Мафия</option>
+                                        <option value="Дон">Дон</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Когда убит:</label>
+                                    <input type="text" id="g${i}_p${p}_death" placeholder="0 / 1D / 2N" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Поле для проверок шерифа
+                html += `
+                    <div class="form-group">
+                        <label>Проверки Шерифа (номера игроков через запятую):</label>
+                        <input type="text" id="g${i}_sheriff_checks" placeholder="1,3,5">
+                        <small style="opacity: 0.8;">Список игроков будет показан после ввода имён</small>
+                    </div>
+                `;
+
+                gameSection.innerHTML = html;
+                container.appendChild(gameSection);
+            }
+        }
+
+        async function saveSession() {
+            try {
+                // Собираем данные всех игр
+                gamesData = [];
+
+                for (let gameNum = 1; gameNum <= totalGames; gameNum++) {
+                    const gameData = collectGameData(gameNum);
+                    if (!gameData) {
+                        alert(`Ошибка в игре ${gameNum}: заполните все обязательные поля`);
+                        return;
+                    }
+                    gamesData.push(gameData);
+                }
+
+                // Подготавливаем данные сессии
+                const sessionData = {
+                    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+                    games: gamesData
+                };
+
+                console.log('Отправка данных:', sessionData);
+
+                // Показываем индикатор загрузки
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('step2').classList.add('hidden');
+
+                // Отправляем на сервер
+                const response = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(sessionData)
+                });
+
+                const result = await response.json();
+
+                document.getElementById('loading').classList.add('hidden');
+
+                if (response.ok && result.success) {
+                    document.getElementById('result').innerHTML = `
+                        <div class="section success-message">
+                            ✅ Успешно сохранено!<br>
+                            ID сессии: ${result.session_id}<br>
+                            Сохранено игр: ${result.games_saved}<br><br>
+                            <a href="rating.html" class="btn btn-primary">Посмотреть рейтинг</a>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error || 'Ошибка сохранения');
+                }
+
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('result').innerHTML = `
+                    <div class="section error-message">
+                        ❌ Ошибка: ${error.message}<br><br>
+                        <button class="btn" onclick="location.reload()">Попробовать снова</button>
+                    </div>
+                `;
+                console.error('Ошибка сохранения:', error);
+            }
+        }
+
+        function collectGameData(gameNum) {
+            const players = [];
+            const sheriffChecks = document.getElementById(`g${gameNum}_sheriff_checks`).value;
+
+            // Собираем данных игроков
+            for (let p = 1; p <= 10; p++) {
+                const name = document.getElementById(`g${gameNum}_p${p}_name`).value.trim();
+                const role = document.getElementById(`g${gameNum}_p${p}_role`).value;
+                const death = document.getElementById(`g${gameNum}_p${p}_death`).value.trim();
+
+                if (!name) {
+                    return null; // Обязательное поле не заполнено
+                }
+
+                players.push({
+                    name: name,
+                    role: role,
+                    killed_when: death || '0'
+                });
+            }
+
+            // Используем калькулятор из rating_calculator.js
+            const gameResult = calculateGame(players, sheriffChecks);
+
+            return {
+                game_number: gameNum,
+                winner: gameResult.winner,
+                is_clean_win: gameResult.is_clean_win,
+                is_dry_win: gameResult.is_dry_win,
+                results: gameResult.results
+            };
+        }
+
+        function resetForm() {
+            if (confirm('Начать заново? Все введённые данные будут потеряны.')) {
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>

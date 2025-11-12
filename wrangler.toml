@@ -1,7 +1,15 @@
 name = "mafclubdemo"
 compatibility_date = "2025-11-05"
+pages_build_output_dir = "."
 
-[assets]
-directory = "."
+# D1 База данных
+[[d1_databases]]
+binding = "DB"
+database_name = "mafia-rating"
+database_id = "0493685a-cd3e-45d0-9627-6b3652dc31e3"
+
+# Pages Functions
+[build]
+command = ""
 
 # Статический сайт - все файлы из корня (.)

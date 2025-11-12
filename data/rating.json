@@ -1,0 +1,112 @@
+[
+  {
+    "rank": 1,
+    "id": 6,
+    "name": "Федор",
+    "games_played": 2,
+    "total_points": 13,
+    "avg_points": 6.5,
+    "wins": 2,
+    "losses": 0
+  },
+  {
+    "rank": 2,
+    "id": 3,
+    "name": "Виктор",
+    "games_played": 2,
+    "total_points": 11,
+    "avg_points": 5.5,
+    "wins": 2,
+    "losses": 0
+  },
+  {
+    "rank": 3,
+    "id": 2,
+    "name": "Борис",
+    "games_played": 2,
+    "total_points": 8,
+    "avg_points": 4.0,
+    "wins": 2,
+    "losses": 0
+  },
+  {
+    "rank": 4,
+    "id": 4,
+    "name": "Денис",
+    "games_played": 2,
+    "total_points": 8,
+    "avg_points": 4.0,
+    "wins": 2,
+    "losses": 0
+  },
+  {
+    "rank": 5,
+    "id": 10,
+    "name": "Лена",
+    "games_played": 2,
+    "total_points": 8,
+    "avg_points": 4.0,
+    "wins": 2,
+    "losses": 0
+  },
+  {
+    "rank": 6,
+    "id": 1,
+    "name": "2",
+    "games_played": 1,
+    "total_points": 4,
+    "avg_points": 4.0,
+    "wins": 1,
+    "losses": 0
+  },
+  {
+    "rank": 7,
+    "id": 11,
+    "name": "Алекс",
+    "games_played": 1,
+    "total_points": 4,
+    "avg_points": 4.0,
+    "wins": 1,
+    "losses": 0
+  },
+  {
+    "rank": 8,
+    "id": 5,
+    "name": "Елена",
+    "games_played": 2,
+    "total_points": 4,
+    "avg_points": 2.0,
+    "wins": 1,
+    "losses": 0
+  },
+  {
+    "rank": 9,
+    "id": 9,
+    "name": "Константин",
+    "games_played": 2,
+    "total_points": 4,
+    "avg_points": 2.0,
+    "wins": 1,
+    "losses": 0
+  },
+  {
+    "rank": 10,
+    "id": 7,
+    "name": "Григорий",
+    "games_played": 2,
+    "total_points": -3,
+    "avg_points": -1.5,
+    "wins": 0,
+    "losses": 1
+  },
+  {
+    "rank": 11,
+    "id": 8,
+    "name": "Иван",
+    "games_played": 2,
+    "total_points": -3,
+    "avg_points": -1.5,
+    "wins": 0,
+    "losses": 1
+  }
+]

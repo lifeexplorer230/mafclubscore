@@ -1,0 +1,47 @@
+{
+  "id": 9,
+  "name": "Константин",
+  "overall": {
+    "games_played": 2,
+    "total_points": 4,
+    "avg_points": 2.0,
+    "wins": 1,
+    "losses": 0,
+    "best_game": 4,
+    "worst_game": 0
+  },
+  "by_role": [
+    {
+      "role": "Мирный",
+      "games_count": 1,
+      "total_points": 4,
+      "avg_points": 4.0
+    },
+    {
+      "role": "Мафия",
+      "games_count": 1,
+      "total_points": 0,
+      "avg_points": 0.0
+    }
+  ],
+  "recent_games": [
+    {
+      "game_id": 2,
+      "session_date": "2025-11-12",
+      "game_number": 2,
+      "role": "Мирный",
+      "points": 4,
+      "winner": "Мирные",
+      "is_alive": 0
+    },
+    {
+      "game_id": 1,
+      "session_date": "2025-11-12",
+      "game_number": 1,
+      "role": "Мафия",
+      "points": 0,
+      "winner": "Мирные",
+      "is_alive": 0
+    }
+  ]
+}
