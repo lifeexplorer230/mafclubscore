@@ -290,6 +290,57 @@
             }
         }
 
+        function formatDeathTime(deathTime) {
+            if (deathTime === '0') {
+                return '✅ Жив';
+            }
+
+            // Парсим формат "3D" или "1N"
+            const match = deathTime.match(/^(\d+)([DN])$/);
+            if (!match) {
+                return deathTime; // Если формат неизвестен, вернуть как есть
+            }
+
+            const number = parseInt(match[1]);
+            const type = match[2]; // D = Day, N = Night
+
+            // Преобразуем число в слово
+            const numberWords = {
+                1: 'первый',
+                2: 'второй',
+                3: 'третий',
+                4: 'четвёртый',
+                5: 'пятый',
+                6: 'шестой',
+                7: 'седьмой',
+                8: 'восьмой',
+                9: 'девятый',
+                10: 'десятый'
+            };
+
+            const numberWord = numberWords[number] || number;
+            const typeWord = type === 'D' ? 'день' : 'ночь';
+
+            // Для ночи используем женский род
+            if (type === 'N') {
+                const nightWords = {
+                    1: 'первая',
+                    2: 'вторая',
+                    3: 'третья',
+                    4: 'четвёртая',
+                    5: 'пятая',
+                    6: 'шестая',
+                    7: 'седьмая',
+                    8: 'восьмая',
+                    9: 'девятая',
+                    10: 'десятая'
+                };
+                return `${nightWords[number] || number} ${typeWord}`;
+            }
+
+            return `${numberWord} ${typeWord}`;
+        }
+
         function displayGameDetails(data) {
             const { game, players } = data;
 
@@ -348,7 +399,7 @@
                 const pointsClass = player.points > 0 ? 'points-positive' :
                                    player.points < 0 ? 'points-negative' : 'points-zero';
 
-                const deathText = player.death_time === '0' ? '✅ Жив' : player.death_time;
+                const deathText = formatDeathTime(player.death_time);
 
                 let achievementsHtml = '';
                 if (player.achievements && player.achievements.length > 0) {

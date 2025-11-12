@@ -83,32 +83,69 @@
             opacity: 0.8;
         }
 
-        .best-player {
-            background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.3));
-            border: 2px solid rgba(251, 191, 36, 0.5);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 15px;
+        .top-players {
+            margin-top: 20px;
         }
 
-        .best-player-title {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
+        .top-players-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-align: center;
             color: #fbbf24;
         }
 
-        .best-player-name {
-            font-size: 2rem;
-            font-weight: bold;
+        .player-rank {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px 20px;
             margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
         }
 
-        .best-player-stats {
-            font-size: 1.1rem;
+        .player-rank:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .player-rank.rank-1 {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.3));
+            border: 2px solid rgba(251, 191, 36, 0.5);
+        }
+
+        .player-rank.rank-2 {
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.3), rgba(169, 169, 169, 0.3));
+            border: 2px solid rgba(192, 192, 192, 0.5);
+        }
+
+        .player-rank.rank-3 {
+            background: linear-gradient(135deg, rgba(205, 127, 50, 0.3), rgba(184, 115, 51, 0.3));
+            border: 2px solid rgba(205, 127, 50, 0.5);
+        }
+
+        .player-rank-number {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+
+        .player-rank-info {
+            flex: 1;
+        }
+
+        .player-rank-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .player-rank-stats {
+            font-size: 0.95rem;
             opacity: 0.9;
         }
 
-        .best-player-stats strong {
+        .player-rank-stats strong {
             color: #fbbf24;
         }
 
@@ -266,18 +303,29 @@
                             </div>
                         </div>
 
-                        ${day.best_player ? `
-                            <div class="best-player">
-                                <div class="best-player-title">🏆 Лучший игрок дня</div>
-                                <div class="best-player-name">${day.best_player.name}</div>
-                                <div class="best-player-stats">
-                                    Средний балл за игру: <strong>${day.best_player.avg_points}</strong><br>
-                                    Всего очков: ${day.best_player.total_points} |
-                                    Выигрышей: ${day.best_player.wins} |
-                                    Игр сыграно: ${day.best_player.games_played}
-                                </div>
+                        ${day.top_players && day.top_players.length > 0 ? `
+                            <div class="top-players">
+                                <div class="top-players-title">🏆 Топ-3 игрока дня</div>
+                                ${day.top_players.map((player, index) => {
+                                    const medals = ['🥇', '🥈', '🥉'];
+                                    const rankClass = `rank-${index + 1}`;
+                                    return `
+                                        <div class="player-rank ${rankClass}">
+                                            <div class="player-rank-number">${medals[index]}</div>
+                                            <div class="player-rank-info">
+                                                <div class="player-rank-name">${player.name}</div>
+                                                <div class="player-rank-stats">
+                                                    Средний балл: <strong>${player.avg_points}</strong> |
+                                                    Очков: ${player.total_points} |
+                                                    Побед: ${player.wins} |
+                                                    Игр: ${player.games_played}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
-                        ` : '<div class="no-data">Нет данных о лучшем игроке</div>'}
+                        ` : '<div class="no-data">Нет данных о лучших игроках (нужно минимум 3 игры)</div>'}
                     </div>
                 `;
             }

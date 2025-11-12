@@ -95,11 +95,11 @@ async function getDayStats(env, corsHeaders) {
     ORDER BY gs.date DESC
   `).all();
 
-  // Для каждого дня получаем лучшего игрока (по всем играм этого дня)
-  const daysWithBestPlayer = [];
+  // Для каждого дня получаем топ-3 игроков (по всем играм этого дня)
+  const daysWithTopPlayers = [];
 
   for (const day of days.results) {
-    const bestPlayer = await db.prepare(`
+    const topPlayers = await db.prepare(`
       SELECT
         p.id,
         p.name,
@@ -115,25 +115,25 @@ async function getDayStats(env, corsHeaders) {
       GROUP BY p.id, p.name
       HAVING games_played >= 3
       ORDER BY avg_points DESC
-      LIMIT 1
-    `).bind(day.date).first();
+      LIMIT 3
+    `).bind(day.date).all();
 
-    daysWithBestPlayer.push({
+    daysWithTopPlayers.push({
       ...day,
-      best_player: bestPlayer ? {
-        id: bestPlayer.id,
-        name: bestPlayer.name,
-        total_points: bestPlayer.total_points,
-        wins: bestPlayer.wins,
-        games_played: bestPlayer.games_played,
-        avg_points: bestPlayer.avg_points ? parseFloat(bestPlayer.avg_points.toFixed(2)) : 0
-      } : null
+      top_players: topPlayers.results.map(player => ({
+        id: player.id,
+        name: player.name,
+        total_points: player.total_points,
+        wins: player.wins,
+        games_played: player.games_played,
+        avg_points: player.avg_points ? parseFloat(player.avg_points.toFixed(2)) : 0
+      }))
     });
   }
 
   return new Response(JSON.stringify({
     success: true,
-    days: daysWithBestPlayer
+    days: daysWithTopPlayers
   }), {
     status: 200,
     headers: corsHeaders
