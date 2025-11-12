@@ -1,4 +1,5 @@
 name = "mafclubdemo"
+main = "_worker.js"
 compatibility_date = "2025-11-05"
 
 # Статические файлы (HTML, JS, CSS)
