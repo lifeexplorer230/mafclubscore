@@ -75,9 +75,6 @@ function calculateGame(players, sheriffChecksStr) {
                 if (black_checks >= 3) {
                     points += 3;
                     achievements.push('3 черные проверки');
-                } else if (red_checks >= 3) {
-                    points += 2;
-                    achievements.push('3 красные проверки');
                 }
             }
 

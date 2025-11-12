@@ -76,20 +76,20 @@ async function handleAPI(request, env, url) {
 async function getDayStats(env, corsHeaders) {
   const db = env.DB;
 
+  // Группируем по датам (не по сессиям!)
   const days = await db.prepare(`
     SELECT
-      gs.id as session_id,
       gs.date,
-      gs.total_games,
+      SUM(gs.total_games) as total_games,
       COUNT(DISTINCT gr.player_id) as total_players
     FROM game_sessions gs
     LEFT JOIN games g ON gs.id = g.session_id
     LEFT JOIN game_results gr ON g.id = gr.game_id
-    GROUP BY gs.id, gs.date, gs.total_games
+    GROUP BY gs.date
     ORDER BY gs.date DESC
   `).all();
 
-  // Для каждого дня получаем лучшего игрока
+  // Для каждого дня получаем лучшего игрока (по всем играм этого дня)
   const daysWithBestPlayer = [];
 
   for (const day of days.results) {
@@ -104,12 +104,13 @@ async function getDayStats(env, corsHeaders) {
       FROM players p
       JOIN game_results gr ON p.id = gr.player_id
       JOIN games g ON gr.game_id = g.id
-      WHERE g.session_id = ?
+      JOIN game_sessions gs ON g.session_id = gs.id
+      WHERE gs.date = ?
       GROUP BY p.id, p.name
-      HAVING wins > 0
+      HAVING wins > 0 AND games_played >= 3
       ORDER BY avg_points_per_win DESC
       LIMIT 1
-    `).bind(day.session_id).first();
+    `).bind(day.date).first();
 
     daysWithBestPlayer.push({
       ...day,
@@ -155,13 +156,21 @@ async function saveSession(request, env, corsHeaders) {
 
   const sessionId = sessionResult.meta.last_row_id;
 
-  // 2. Сохраняем каждую игру
+  // 2. Получаем максимальный номер игры для сквозной нумерации
+  const maxGameNumber = await db.prepare(
+    'SELECT COALESCE(MAX(game_number), 0) as max_num FROM games'
+  ).first();
+
+  let currentGameNumber = maxGameNumber.max_num;
+
+  // 3. Сохраняем каждую игру
   for (const game of sessionData.games) {
+    currentGameNumber++;
     const gameResult = await db.prepare(
       'INSERT INTO games (session_id, game_number, winner, is_clean_win, is_dry_win) VALUES (?, ?, ?, ?, ?)'
     ).bind(
       sessionId,
-      game.game_number,
+      currentGameNumber,
       game.winner,
       game.is_clean_win ? 1 : 0,
       game.is_dry_win ? 1 : 0
@@ -169,7 +178,7 @@ async function saveSession(request, env, corsHeaders) {
 
     const gameId = gameResult.meta.last_row_id;
 
-    // 3. Сохраняем результаты игроков
+    // 4. Сохраняем результаты игроков
     for (const result of game.results) {
       let player = await db.prepare(
         'SELECT id FROM players WHERE name = ?'
@@ -203,7 +212,7 @@ async function saveSession(request, env, corsHeaders) {
     }
   }
 
-  // 4. Вычисляем лучшего игрока дня
+  // 5. Вычисляем лучшего игрока дня
   const bestPlayerQuery = await db.prepare(`
     SELECT
       p.id,
@@ -217,7 +226,7 @@ async function saveSession(request, env, corsHeaders) {
     JOIN games g ON gr.game_id = g.id
     WHERE g.session_id = ?
     GROUP BY p.id, p.name
-    HAVING wins > 0
+    HAVING wins > 0 AND games_played >= 3
     ORDER BY avg_points_per_win DESC
     LIMIT 1
   `).bind(sessionId).first();
