@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flags Demo - MafClubScore</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .flag-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .flag-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        .flag-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .flag-name {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        .flag-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .flag-enabled {
+            background: #28a745;
+            color: white;
+        }
+        .flag-disabled {
+            background: #6c757d;
+            color: white;
+        }
+        .demo-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 6px;
+        }
+        .demo-section h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .console-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        .phase-header {
+            background: #3498db;
+            color: white;
+            padding: 10px 15px;
+            margin: 20px 0 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚩 Feature Flags Demo</h1>
+
+        <div class="info-box">
+            <strong>ℹ️ Что это?</strong><br>
+            Feature flags позволяют включать/выключать новые функции без изменения кода.
+            Все флаги по умолчанию выключены. Управление через environment variables.
+        </div>
+
+        <div id="flags-container"></div>
+
+        <div class="demo-section">
+            <h3>🔍 Консольный вывод</h3>
+            <p>Откройте консоль браузера (F12) и выполните:</p>
+            <div class="console-output">
+// Получить все флаги<br>
+window.FeatureFlags.getAllFlags()<br>
+<br>
+// Проверить конкретный флаг<br>
+window.FeatureFlags.isEnabled('NEW_AUTH_SYSTEM')<br>
+<br>
+// Получить статус флага<br>
+window.FeatureFlags.getFlag('XSS_PROTECTION')
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📝 Пример использования в коде</h3>
+            <div class="console-output">
+import { isEnabled } from './shared/feature-flags.js';<br>
+<br>
+if (isEnabled('XSS_PROTECTION')) {<br>
+&nbsp;&nbsp;// Безопасный рендеринг<br>
+&nbsp;&nbsp;const elem = document.createElement('div');<br>
+&nbsp;&nbsp;elem.textContent = userData;<br>
+} else {<br>
+&nbsp;&nbsp;// Старый способ<br>
+&nbsp;&nbsp;element.innerHTML = userData;<br>
+}
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getAllFlags, isEnabled, getFlag } from './shared/feature-flags.js';
+
+        // Группировка флагов по фазам
+        const flagsByPhase = {
+            'Фаза 1: Безопасность': [
+                { name: 'NEW_AUTH_SYSTEM', desc: 'JWT вместо hardcoded' },
+                { name: 'XSS_PROTECTION', desc: 'Безопасные DOM операции' },
+                { name: 'STRICT_CORS', desc: 'Ограниченный CORS' },
+                { name: 'INPUT_VALIDATION', desc: 'Zod валидация' }
+            ],
+            'Фаза 2: Архитектура': [
+                { name: 'SHARED_HANDLERS', desc: 'Общие API handlers' },
+                { name: 'DATABASE_SERVICE', desc: 'Слой абстракции БД' }
+            ],
+            'Фаза 3: Производительность': [
+                { name: 'QUERY_OPTIMIZATION', desc: 'Оптимизированные запросы' },
+                { name: 'REDIS_CACHE', desc: 'Кэширование' }
+            ],
+            'Фаза 4: Новый функционал': [
+                { name: 'NOTIFICATIONS', desc: 'Система уведомлений' },
+                { name: 'ADVANCED_STATS', desc: 'Расширенная статистика' },
+                { name: 'TOURNAMENTS', desc: 'Турниры' }
+            ]
+        };
+
+        const container = document.getElementById('flags-container');
+        const allFlags = getAllFlags();
+
+        // Рендерим флаги по фазам
+        Object.entries(flagsByPhase).forEach(([phase, flags]) => {
+            const phaseHeader = document.createElement('div');
+            phaseHeader.className = 'phase-header';
+            phaseHeader.textContent = phase;
+            container.appendChild(phaseHeader);
+
+            const flagList = document.createElement('div');
+            flagList.className = 'flag-list';
+
+            flags.forEach(({ name, desc }) => {
+                const enabled = isEnabled(name);
+
+                const flagItem = document.createElement('div');
+                flagItem.className = 'flag-item';
+
+                flagItem.innerHTML = `
+                    <div class="flag-name">${name}</div>
+                    <div style="margin: 5px 0; font-size: 13px; color: #6c757d;">${desc}</div>
+                    <span class="flag-status ${enabled ? 'flag-enabled' : 'flag-disabled'}">
+                        ${enabled ? '✓ ВКЛЮЧЕН' : '✗ ВЫКЛЮЧЕН'}
+                    </span>
+                `;
+
+                flagList.appendChild(flagItem);
+            });
+
+            container.appendChild(flagList);
+        });
+
+        // Вывод в консоль для демонстрации
+        console.log('🚩 Feature Flags Demo');
+        console.log('='.repeat(50));
+        console.log('Все флаги:', allFlags);
+        console.log('');
+        console.log('Доступные команды:');
+        console.log('  window.FeatureFlags.getAllFlags()');
+        console.log('  window.FeatureFlags.isEnabled("NEW_AUTH_SYSTEM")');
+        console.log('  window.FeatureFlags.getFlag("XSS_PROTECTION")');
+    </script>
+</body>
+</html>
