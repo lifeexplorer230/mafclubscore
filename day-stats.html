@@ -149,6 +149,17 @@
             color: #fbbf24;
         }
 
+        .player-rank-name a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .player-rank-name a:hover {
+            color: #fbbf24;
+            text-decoration: underline;
+        }
+
         .loading {
             text-align: center;
             padding: 50px;
@@ -313,7 +324,9 @@
                                         <div class="player-rank ${rankClass}">
                                             <div class="player-rank-number">${medals[index]}</div>
                                             <div class="player-rank-info">
-                                                <div class="player-rank-name">${player.name}</div>
+                                                <div class="player-rank-name">
+                                                    <a href="player.html?id=${player.id}">${player.name}</a>
+                                                </div>
                                                 <div class="player-rank-stats">
                                                     Средний балл: <strong>${player.avg_points}</strong> |
                                                     Очков: ${player.total_points} |

@@ -86,7 +86,7 @@ async function getDayStats(env, corsHeaders) {
   const days = await db.prepare(`
     SELECT
       gs.date,
-      SUM(gs.total_games) as total_games,
+      COUNT(DISTINCT g.id) as total_games,
       COUNT(DISTINCT gr.player_id) as total_players
     FROM game_sessions gs
     LEFT JOIN games g ON gs.id = g.session_id
