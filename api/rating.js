@@ -1,4 +1,5 @@
 import { createClient } from '@libsql/client/web';
+import { corsMiddleware } from './middleware/cors.js';
 
 function getDB() {
   return createClient({
@@ -8,14 +9,8 @@ function getDB() {
 }
 
 export default async function handler(request, response) {
-  // CORS headers
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (request.method === 'OPTIONS') {
-    return response.status(200).end();
-  }
+  // CORS protection - only allow requests from allowed origins
+  if (corsMiddleware(request, response)) return; // Preflight handled
 
   try {
     const db = getDB();
