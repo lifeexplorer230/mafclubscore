@@ -309,7 +309,7 @@ async function getPlayer(env, corsHeaders, playerId) {
 
   const games = await db.prepare(`
     SELECT
-      g.id,
+      g.id as game_id,
       gs.date,
       g.game_number,
       g.winner,
