@@ -149,19 +149,16 @@
 
         <div class="header">
             <h1>🏆 Рейтинг игроков</h1>
-            <p>МАФ-Клуб «SHOWTIME»</p>
+            <p>MafClub.biz</p>
         </div>
 
         <div id="content">
             <div class="loading">Загрузка рейтинга...</div>
         </div>
 
-        <div style="text-align: center; margin-top: 30px; padding: 20px; opacity: 0.7; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <div style="text-align: center; margin-top: 30px; padding: 20px; opacity: 0.7;">
             <a href="day-stats.html" style="color: white; text-decoration: none; font-size: 0.9rem; padding: 8px 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
                 📊 Статистика по дням
-            </a>
-            <a href="login.html" style="color: white; text-decoration: none; font-size: 0.9rem; padding: 8px 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
-                🎮 Ввод игр (для операторов)
             </a>
         </div>
     </div>
@@ -252,8 +249,8 @@
         window.onload = loadRating;
     </script>
 
-    <div style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px;">
+    <a href="login.html" style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.5'">
         v1.0.9
-    </div>
+    </a>
 </body>
 </html>

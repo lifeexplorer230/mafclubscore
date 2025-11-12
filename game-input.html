@@ -183,21 +183,17 @@
         <a href="index.html" class="back-link">← Главная</a>
 
         <div class="header">
-            <h1>🎮 Ввод результатов игр</h1>
-            <p>МАФ-Клуб «SHOWTIME»</p>
+            <h1>🎮 Ввод игры</h1>
+            <p>MafClub.biz</p>
         </div>
 
-        <!-- Шаг 1: Количество игр и дата -->
+        <!-- Шаг 1: Дата игры -->
         <div id="step1" class="section">
             <div class="form-group">
                 <label for="gameDate">📅 Дата игрового дня:</label>
                 <input type="date" id="gameDate" required>
             </div>
-            <div class="form-group">
-                <label for="totalGames">🎮 Сколько игр будет сыграно?</label>
-                <input type="number" id="totalGames" min="1" max="10" value="4">
-            </div>
-            <button class="btn btn-primary" onclick="startGames()">Начать ввод игр</button>
+            <button class="btn btn-primary" onclick="startGame()">Начать ввод игры</button>
         </div>
 
         <!-- Шаг 2: Ввод игр -->
@@ -205,7 +201,7 @@
             <div id="gamesContainer"></div>
 
             <div class="section">
-                <button class="btn btn-primary" onclick="saveSession()">💾 Сохранить все игры</button>
+                <button class="btn btn-primary" onclick="saveGame()">💾 Сохранить игру</button>
                 <button class="btn" onclick="resetForm()">🔄 Начать заново</button>
             </div>
         </div>
@@ -260,9 +256,8 @@
             }
         })();
 
-        let totalGames = 0;
-        let gamesData = [];
         let gameDate = '';
+        let gameNumber = 1; // Всегда 1 игра за раз
 
         // Устанавливаем сегодняшнюю дату по умолчанию
         document.addEventListener('DOMContentLoaded', function() {
@@ -270,99 +265,86 @@
             document.getElementById('gameDate').value = today;
         });
 
-        function startGames() {
+        function startGame() {
             gameDate = document.getElementById('gameDate').value;
-            totalGames = parseInt(document.getElementById('totalGames').value);
 
             if (!gameDate) {
                 alert('Выберите дату игрового дня');
                 return;
             }
 
-            if (totalGames < 1 || totalGames > 10) {
-                alert('Количество игр должно быть от 1 до 10');
-                return;
-            }
-
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
 
-            generateGameForms();
+            generateGameForm();
         }
 
-        function generateGameForms() {
+        function generateGameForm() {
             const container = document.getElementById('gamesContainer');
             container.innerHTML = '';
 
-            for (let i = 1; i <= totalGames; i++) {
-                const gameSection = document.createElement('div');
-                gameSection.className = 'game-section';
-                gameSection.id = `game-${i}`;
+            const gameSection = document.createElement('div');
+            gameSection.className = 'game-section';
+            gameSection.id = 'game-1';
 
-                let html = `
-                    <div class="game-header">🎮 Игра ${i} из ${totalGames}</div>
-                `;
+            let html = `
+                <div class="game-header">🎮 Ввод игры</div>
+            `;
 
-                // 10 игроков
-                for (let p = 1; p <= 10; p++) {
-                    html += `
-                        <div class="player-card">
-                            <div class="player-header">Игрок ${p}</div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Имя:</label>
-                                    <input type="text" id="g${i}_p${p}_name" placeholder="Введите имя" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Роль:</label>
-                                    <select id="g${i}_p${p}_role">
-                                        <option value="Мирный">Мирный</option>
-                                        <option value="Шериф">Шериф</option>
-                                        <option value="Мафия">Мафия</option>
-                                        <option value="Дон">Дон</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Когда убит:</label>
-                                    <input type="text" id="g${i}_p${p}_death" placeholder="0 / 1D / 2N" value="0">
-                                </div>
+            // 10 игроков
+            for (let p = 1; p <= 10; p++) {
+                html += `
+                    <div class="player-card">
+                        <div class="player-header">Игрок ${p}</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Имя:</label>
+                                <input type="text" id="g1_p${p}_name" placeholder="Введите имя" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Роль:</label>
+                                <select id="g1_p${p}_role">
+                                    <option value="Мирный">Мирный</option>
+                                    <option value="Шериф">Шериф</option>
+                                    <option value="Мафия">Мафия</option>
+                                    <option value="Дон">Дон</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Когда убит:</label>
+                                <input type="text" id="g1_p${p}_death" placeholder="0 / 1D / 2N" value="0">
                             </div>
                         </div>
-                    `;
-                }
-
-                // Поле для проверок шерифа
-                html += `
-                    <div class="form-group">
-                        <label>Проверки Шерифа (номера игроков через запятую):</label>
-                        <input type="text" id="g${i}_sheriff_checks" placeholder="1,3,5">
-                        <small style="opacity: 0.8;">Список игроков будет показан после ввода имён</small>
                     </div>
                 `;
-
-                gameSection.innerHTML = html;
-                container.appendChild(gameSection);
             }
+
+            // Поле для проверок шерифа
+            html += `
+                <div class="form-group">
+                    <label>Проверки Шерифа (номера игроков через запятую):</label>
+                    <input type="text" id="g1_sheriff_checks" placeholder="1,3,5">
+                    <small style="opacity: 0.8;">Список игроков будет показан после ввода имён</small>
+                </div>
+            `;
+
+            gameSection.innerHTML = html;
+            container.appendChild(gameSection);
         }
 
-        async function saveSession() {
+        async function saveGame() {
             try {
-                // Собираем данные всех игр
-                gamesData = [];
-
-                for (let gameNum = 1; gameNum <= totalGames; gameNum++) {
-                    const gameData = collectGameData(gameNum);
-                    if (!gameData) {
-                        alert(`Ошибка в игре ${gameNum}: заполните все обязательные поля`);
-                        return;
-                    }
-                    gamesData.push(gameData);
+                // Собираем данные игры
+                const gameData = collectGameData(1);
+                if (!gameData) {
+                    alert('Заполните все обязательные поля');
+                    return;
                 }
 
-                // Подготавливаем данные сессии
+                // Подготавливаем данные для сохранения
                 const sessionData = {
-                    date: gameDate, // Выбранная дата игрового дня
-                    games: gamesData
+                    date: gameDate,
+                    games: [gameData] // Всегда массив с одной игрой
                 };
 
                 console.log('Отправка данных:', sessionData);
@@ -402,12 +384,12 @@
 
                     document.getElementById('result').innerHTML = `
                         <div class="section success-message">
-                            ✅ Успешно сохранено!<br>
-                            ID сессии: ${result.session_id}<br>
-                            Сохранено игр: ${result.games_saved}<br>
+                            ✅ Игра успешно сохранена!<br>
                             ${bestPlayerHtml}
                             <br>
-                            <a href="rating.html" class="btn btn-primary">Посмотреть рейтинг</a>
+                            <button class="btn btn-primary" onclick="location.reload()">Ввести ещё игру</button>
+                            <a href="rating.html" class="btn">Посмотреть рейтинг</a>
+                            <a href="day-stats.html" class="btn">Статистика по дням</a>
                         </div>
                     `;
                 } else {
@@ -466,8 +448,8 @@
         }
     </script>
 
-    <div style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px;">
+    <a href="rating.html" style="position: fixed; bottom: 10px; right: 10px; opacity: 0.5; font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 5px; text-decoration: none; color: white; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.5'">
         v1.0.9
-    </div>
+    </a>
 </body>
 </html>
