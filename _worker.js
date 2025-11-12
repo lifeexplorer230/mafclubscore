@@ -55,6 +55,12 @@ async function handleAPI(request, env, url) {
       return await getPlayer(env, corsHeaders, playerMatch[1]);
     }
 
+    // GET /api/games/:id - детали игры
+    const gameMatch = url.pathname.match(/^\/api\/games\/(\d+)$/);
+    if (gameMatch && request.method === 'GET') {
+      return await getGameDetails(env, corsHeaders, gameMatch[1]);
+    }
+
     return new Response(JSON.stringify({ error: 'Not Found' }), {
       status: 404,
       headers: corsHeaders
@@ -340,6 +346,72 @@ async function getPlayersList(env, corsHeaders) {
   return new Response(JSON.stringify({
     success: true,
     players: players.results
+  }), {
+    status: 200,
+    headers: corsHeaders
+  });
+}
+
+// Получить детали игры
+async function getGameDetails(env, corsHeaders, gameId) {
+  const db = env.DB;
+
+  // Получаем информацию об игре
+  const game = await db.prepare(`
+    SELECT
+      g.id,
+      g.game_number,
+      g.winner,
+      g.is_clean_win,
+      g.is_dry_win,
+      gs.date
+    FROM games g
+    JOIN game_sessions gs ON g.session_id = gs.id
+    WHERE g.id = ?
+  `).bind(gameId).first();
+
+  if (!game) {
+    return new Response(JSON.stringify({
+      error: 'Game not found'
+    }), {
+      status: 404,
+      headers: corsHeaders
+    });
+  }
+
+  // Получаем всех игроков этой игры с их результатами
+  const results = await db.prepare(`
+    SELECT
+      gr.id,
+      p.id as player_id,
+      p.name as player_name,
+      gr.role,
+      gr.death_time,
+      gr.is_alive,
+      gr.points,
+      gr.black_checks,
+      gr.red_checks,
+      gr.achievements
+    FROM game_results gr
+    JOIN players p ON gr.player_id = p.id
+    WHERE gr.game_id = ?
+    ORDER BY gr.points DESC
+  `).bind(gameId).all();
+
+  // Парсим достижения (они хранятся как JSON)
+  const players = results.results.map(r => ({
+    ...r,
+    achievements: r.achievements ? JSON.parse(r.achievements) : []
+  }));
+
+  return new Response(JSON.stringify({
+    success: true,
+    game: {
+      ...game,
+      is_clean_win: game.is_clean_win === 1,
+      is_dry_win: game.is_dry_win === 1
+    },
+    players: players
   }), {
     status: 200,
     headers: corsHeaders

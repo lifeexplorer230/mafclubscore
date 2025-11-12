@@ -149,6 +149,18 @@
             font-weight: bold;
         }
 
+        .clickable-link {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .clickable-link:hover {
+            color: #fbbf24;
+            border-bottom-color: #fbbf24;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -337,8 +349,8 @@
 
                     html += `
                         <tr>
-                            <td>${dateFormatted}</td>
-                            <td>#${game.game_number || 1}</td>
+                            <td><a href="day-stats.html" class="clickable-link">${dateFormatted}</a></td>
+                            <td><a href="game-details.html?id=${game.game_id}" class="clickable-link">#${game.game_number || 1}</a></td>
                             <td>${game.role}</td>
                             <td>${game.winner === 'Мирные' ? '🏡' : '🔫'} ${game.winner}</td>
                             <td class="${pointsClass}">${game.points > 0 ? '+' : ''}${game.points}</td>
