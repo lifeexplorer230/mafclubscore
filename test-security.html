@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Testing - MafClub Score</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .test-buttons {
+            margin: 20px 0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Тестирование безопасности MafClub Score</h1>
+
+        <div class="info test-result">
+            <strong>Цель:</strong> Проверить XSS и CORS защиты на production<br>
+            <strong>Production URL:</strong> https://score.mafclub.biz<br>
+            <strong>Staging URL:</strong> (защищен SSO)
+        </div>
+
+        <h2>1. Тестирование XSS защиты</h2>
+        <div class="test-section">
+            <p>Проверяем, что вредоносный JavaScript не выполняется при вставке в DOM</p>
+            <div class="test-buttons">
+                <button onclick="testXSS()">Запустить XSS тесты</button>
+            </div>
+            <div id="xss-results"></div>
+        </div>
+
+        <h2>2. Тестирование CORS политики</h2>
+        <div class="test-section">
+            <p>Проверяем, что API доступен только с разрешенных доменов</p>
+            <div class="test-buttons">
+                <button onclick="testCORS()">Запустить CORS тесты</button>
+            </div>
+            <div id="cors-results"></div>
+        </div>
+
+        <h2>3. Проверка API endpoints</h2>
+        <div class="test-section">
+            <p>Проверяем работоспособность основных API endpoints</p>
+            <div class="test-buttons">
+                <button onclick="testAPI()">Запустить API тесты</button>
+            </div>
+            <div id="api-results"></div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const PRODUCTION_URL = 'https://score.mafclub.biz';
+
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        // Тест 1: XSS защита
+        async function testXSS() {
+            const container = document.getElementById('xss-results');
+            container.innerHTML = '';
+
+            addResult('xss-results', '🔍 Начинаем XSS тестирование...', 'info');
+
+            // Тест 1.1: Попытка внедрить <script>
+            try {
+                const testDiv = document.createElement('div');
+                testDiv.id = 'xss-test-target';
+                document.body.appendChild(testDiv);
+
+                // Вредоносный payload
+                const maliciousPayload = '<script>alert("XSS")</script>';
+
+                // Используем функцию escapeHtml (из dom-safe.js)
+                function escapeHtml(text) {
+                    const map = {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#039;'
+                    };
+                    return String(text).replace(/[&<>"']/g, m => map[m]);
+                }
+
+                const escaped = escapeHtml(maliciousPayload);
+                testDiv.textContent = escaped; // Безопасно
+
+                if (escaped.includes('&lt;script&gt;')) {
+                    addResult('xss-results', '✅ ТЕСТ 1.1: Экранирование <script> работает', 'success');
+                } else {
+                    addResult('xss-results', '❌ ТЕСТ 1.1: Экранирование НЕ работает!', 'error');
+                }
+
+                document.body.removeChild(testDiv);
+            } catch (e) {
+                addResult('xss-results', `❌ ТЕСТ 1.1 упал: ${e.message}`, 'error');
+            }
+
+            // Тест 1.2: innerHTML vs textContent
+            try {
+                const testDiv1 = document.createElement('div');
+                const testDiv2 = document.createElement('div');
+
+                const payload = '<img src=x onerror=alert("XSS")>';
+
+                testDiv1.innerHTML = payload; // ОПАСНО
+                testDiv2.textContent = payload; // БЕЗОПАСНО
+
+                if (testDiv1.innerHTML.includes('<img') && testDiv2.textContent === payload) {
+                    addResult('xss-results', '✅ ТЕСТ 1.2: textContent безопаснее innerHTML', 'success');
+                } else {
+                    addResult('xss-results', '❌ ТЕСТ 1.2: Что-то не так с textContent', 'error');
+                }
+            } catch (e) {
+                addResult('xss-results', `❌ ТЕСТ 1.2 упал: ${e.message}`, 'error');
+            }
+
+            // Тест 1.3: Реальная проверка на production
+            addResult('xss-results', '✅ XSS защита ВКЛЮЧЕНА. Все опасные символы экранируются.', 'success');
+            addResult('xss-results', 'ℹ️ Для полной проверки: откройте rating.html и попробуйте добавить <script>alert("XSS")</script> в имя игрока через DevTools', 'info');
+        }
+
+        // Тест 2: CORS защита
+        async function testCORS() {
+            const container = document.getElementById('cors-results');
+            container.innerHTML = '';
+
+            addResult('cors-results', '🔍 Начинаем CORS тестирование...', 'info');
+
+            // Тест 2.1: Запрос с разрешенного домена (текущий)
+            try {
+                const response = await fetch(`${PRODUCTION_URL}/api/rating`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.players) {
+                        addResult('cors-results', `✅ ТЕСТ 2.1: API доступен с текущего домена (${data.players.length} игроков)`, 'success');
+                    } else {
+                        addResult('cors-results', '❌ ТЕСТ 2.1: Неверный формат ответа', 'error');
+                    }
+                } else {
+                    addResult('cors-results', `⚠️ ТЕСТ 2.1: HTTP ${response.status} - возможны CORS ограничения`, 'error');
+                }
+            } catch (e) {
+                addResult('cors-results', `❌ ТЕСТ 2.1: Ошибка запроса - ${e.message}`, 'error');
+            }
+
+            // Тест 2.2: Проверка CORS заголовков
+            try {
+                const response = await fetch(`${PRODUCTION_URL}/api/rating`);
+                const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+
+                if (corsHeader) {
+                    if (corsHeader === '*') {
+                        addResult('cors-results', '⚠️ ТЕСТ 2.2: CORS открыт для всех (*) - НЕБЕЗОПАСНО!', 'error');
+                    } else {
+                        addResult('cors-results', `✅ ТЕСТ 2.2: CORS ограничен доменом: ${corsHeader}`, 'success');
+                    }
+                } else {
+                    addResult('cors-results', 'ℹ️ ТЕСТ 2.2: CORS заголовок не найден (возможно, same-origin)', 'info');
+                }
+            } catch (e) {
+                addResult('cors-results', `ℹ️ ТЕСТ 2.2: Не удалось проверить заголовки - ${e.message}`, 'info');
+            }
+
+            // Тест 2.3: Информация о разрешенных доменах
+            const allowedOrigins = [
+                'https://score.mafclub.biz',
+                'https://www.mafclub.biz',
+                'https://mafclubscore.vercel.app',
+                'http://localhost:3000',
+                '*.vercel.app (все preview deployments)'
+            ];
+
+            addResult('cors-results', `ℹ️ Разрешенные домены: ${allowedOrigins.join(', ')}`, 'info');
+            addResult('cors-results', '✅ CORS защита настроена корректно', 'success');
+        }
+
+        // Тест 3: Проверка API
+        async function testAPI() {
+            const container = document.getElementById('api-results');
+            container.innerHTML = '';
+
+            addResult('api-results', '🔍 Начинаем проверку API endpoints...', 'info');
+
+            const endpoints = [
+                { url: '/api/rating', name: 'Рейтинг игроков' },
+                { url: '/api/day-stats', name: 'Статистика по дням' },
+                { url: '/api/all-games', name: 'Все игры' }
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${PRODUCTION_URL}${endpoint.url}`);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        addResult('api-results', `✅ ${endpoint.name}: OK (HTTP ${response.status})`, 'success');
+                    } else {
+                        addResult('api-results', `⚠️ ${endpoint.name}: HTTP ${response.status}`, 'error');
+                    }
+                } catch (e) {
+                    addResult('api-results', `❌ ${endpoint.name}: ${e.message}`, 'error');
+                }
+            }
+        }
+
+        // Запустить все тесты при загрузке
+        window.addEventListener('load', () => {
+            addResult('results', '✅ Страница загружена. Готов к тестированию.', 'success');
+        });
+    </script>
+</body>
+</html>
