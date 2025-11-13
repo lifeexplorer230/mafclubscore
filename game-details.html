@@ -309,16 +309,33 @@
     </div>
 
     <script>
+        // ========== XSS PROTECTION ==========
+        function escapeHtml(text) {
+            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        function createElement(tag, attributes = {}, children = []) {
+            const element = document.createElement(tag);
+            Object.entries(attributes).forEach(([key, value]) => {
+                if (key === 'textContent') element.textContent = value;
+                else if (key === 'className') element.className = value;
+                else element.setAttribute(key, escapeHtml(value));
+            });
+            children.forEach(child => element.appendChild(typeof child === 'string' ? document.createTextNode(child) : child));
+            return element;
+        }
+        function clearElement(element) { while (element.firstChild) element.removeChild(element.firstChild); }
+        // ====================================
+
         async function loadGameDetails() {
             const urlParams = new URLSearchParams(window.location.search);
             const gameId = urlParams.get('id');
 
             if (!gameId) {
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        ⚠️ ID игры не указан
-                    </div>
-                `;
+                // ✅ Безопасный рендеринг
+                const content = document.getElementById('content');
+                clearElement(content);
+                content.appendChild(createElement('div', { className: 'error' }, ['⚠️ ID игры не указан']));
                 return;
             }
 
@@ -332,11 +349,10 @@
                 const data = await response.json();
                 displayGameDetails(data);
             } catch (error) {
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        ⚠️ Ошибка загрузки данных: ${error.message}
-                    </div>
-                `;
+                // ✅ Безопасный рендеринг ошибки
+                const content = document.getElementById('content');
+                clearElement(content);
+                content.appendChild(createElement('div', { className: 'error' }, ['⚠️ Ошибка загрузки данных: ', error.message]));
             }
         }
 
@@ -501,7 +517,7 @@
                             <div class="info-label">Победитель</div>
                             <div class="info-value">
                                 <span class="winner-badge ${winnerClass}">
-                                    ${game.winner === 'Мирные' ? '🏡' : '🔫'} ${game.winner}
+                                    ${game.winner === 'Мирные' ? '🏡' : '🔫'} ${escapeHtml(game.winner)}
                                 </span>
                             </div>
                         </div>
@@ -550,8 +566,8 @@
 
                 html += `
                     <tr>
-                        <td class="player-name"><a href="player.html?id=${player.player_id}">${player.player_name}</a></td>
-                        <td><span class="role-badge ${roleClass}">${player.role}</span></td>
+                        <td class="player-name"><a href="player.html?id=${player.player_id}">${escapeHtml(player.player_name)}</a></td>
+                        <td><span class="role-badge ${roleClass}">${escapeHtml(player.role)}</span></td>
                         <td class="death-time">${deathText}</td>
                         <td class="${pointsClass}">${player.points > 0 ? '+' : ''}${player.points}</td>
                         <td class="hide-mobile">${breakdownHtml}</td>

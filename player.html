@@ -257,16 +257,58 @@
     </div>
 
     <script>
+        // ========== XSS PROTECTION ==========
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function createElement(tag, attributes = {}, children = []) {
+            const element = document.createElement(tag);
+            Object.entries(attributes).forEach(([key, value]) => {
+                if (key === 'textContent') {
+                    element.textContent = value;
+                } else if (key === 'className') {
+                    element.className = value;
+                } else {
+                    element.setAttribute(key, escapeHtml(value));
+                }
+            });
+            children.forEach(child => {
+                if (typeof child === 'string') {
+                    element.appendChild(document.createTextNode(child));
+                } else {
+                    element.appendChild(child);
+                }
+            });
+            return element;
+        }
+
+        function clearElement(element) {
+            while (element.firstChild) {
+                element.removeChild(element.firstChild);
+            }
+        }
+        // ====================================
+
         async function loadPlayerStats() {
             const urlParams = new URLSearchParams(window.location.search);
             const playerId = urlParams.get('id');
 
             if (!playerId) {
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        ⚠️ ID игрока не указан
-                    </div>
-                `;
+                // ✅ Безопасный рендеринг
+                const content = document.getElementById('content');
+                clearElement(content);
+                const errorDiv = createElement('div', { className: 'error' }, [
+                    '⚠️ ID игрока не указан'
+                ]);
+                content.appendChild(errorDiv);
                 return;
             }
 
@@ -287,11 +329,14 @@
                 const stats = await response.json();
                 displayPlayerStats(stats);
             } catch (error) {
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        ⚠️ Ошибка загрузки данных: ${error.message}
-                    </div>
-                `;
+                // ✅ Безопасный рендеринг ошибки
+                const content = document.getElementById('content');
+                clearElement(content);
+                const errorDiv = createElement('div', { className: 'error' }, [
+                    '⚠️ Ошибка загрузки данных: ',
+                    error.message
+                ]);
+                content.appendChild(errorDiv);
             }
         }
 
@@ -312,9 +357,10 @@
                 bestGame = Math.max(...points);
             }
 
+            // ✅ Экранируем пользовательские данные
             let html = `
                 <div class="player-header">
-                    <div class="player-name">👤 ${player.name}</div>
+                    <div class="player-name">👤 ${escapeHtml(player.name)}</div>
                 </div>
 
                 <div class="stats-grid">
@@ -370,7 +416,7 @@
                     html += `
                         <div class="role-item">
                             <div>
-                                <div class="role-name">${roleName}</div>
+                                <div class="role-name">${escapeHtml(roleName)}</div>
                                 <div>${role.games_count} ${role.games_count === 1 ? 'игра' : role.games_count < 5 ? 'игры' : 'игр'}</div>
                             </div>
                             <div class="role-info">
@@ -416,10 +462,10 @@
 
                     html += `
                         <tr>
-                            <td class="hide-mobile"><a href="day-games.html?date=${game.date}" class="clickable-link">${dateFormatted}</a></td>
+                            <td class="hide-mobile"><a href="day-games.html?date=${escapeHtml(game.date)}" class="clickable-link">${dateFormatted}</a></td>
                             <td><a href="game-details.html?id=${game.game_id}" class="clickable-link">#${game.game_number || 1}</a></td>
-                            <td>${game.role}</td>
-                            <td class="hide-mobile">${game.winner === 'Мирные' ? '🏡' : '🔫'} ${game.winner}</td>
+                            <td>${escapeHtml(game.role)}</td>
+                            <td class="hide-mobile">${game.winner === 'Мирные' ? '🏡' : '🔫'} ${escapeHtml(game.winner)}</td>
                             <td class="${pointsClass}">${game.points > 0 ? '+' : ''}${game.points}</td>
                         </tr>
                     `;

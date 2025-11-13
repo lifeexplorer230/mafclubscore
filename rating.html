@@ -228,6 +228,52 @@
     </div>
 
     <script>
+        // ========== XSS PROTECTION ==========
+        // Безопасные функции для предотвращения XSS атак
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function createElement(tag, attributes = {}, children = []) {
+            const element = document.createElement(tag);
+
+            Object.entries(attributes).forEach(([key, value]) => {
+                if (key === 'textContent') {
+                    element.textContent = value;
+                } else if (key === 'className') {
+                    element.className = value;
+                } else if (key === 'onclick') {
+                    element.onclick = value;
+                } else {
+                    element.setAttribute(key, escapeHtml(value));
+                }
+            });
+
+            children.forEach(child => {
+                if (typeof child === 'string') {
+                    element.appendChild(document.createTextNode(child));
+                } else {
+                    element.appendChild(child);
+                }
+            });
+
+            return element;
+        }
+
+        function clearElement(element) {
+            while (element.firstChild) {
+                element.removeChild(element.firstChild);
+            }
+        }
+        // ====================================
+
         let allPlayers = [];
         let currentSortBy = 'points';
 
@@ -251,11 +297,17 @@
                 }
             } catch (error) {
                 console.error('Ошибка загрузки:', error);
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        ⚠️ Ошибка загрузки данных: ${error.message}
-                    </div>
-                `;
+
+                // ✅ Безопасный рендеринг ошибки
+                const content = document.getElementById('content');
+                clearElement(content);
+
+                const errorDiv = createElement('div', { className: 'error' }, [
+                    '⚠️ Ошибка загрузки данных: ',
+                    error.message
+                ]);
+
+                content.appendChild(errorDiv);
             }
         }
 
@@ -267,11 +319,15 @@
         function displayRating() {
             const rating = [...allPlayers];
             if (!rating || rating.length === 0) {
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        📊 Пока нет данных для отображения
-                    </div>
-                `;
+                // ✅ Безопасный рендеринг "нет данных"
+                const content = document.getElementById('content');
+                clearElement(content);
+
+                const emptyDiv = createElement('div', { className: 'error' }, [
+                    '📊 Пока нет данных для отображения'
+                ]);
+
+                content.appendChild(emptyDiv);
                 return;
             }
 
@@ -293,22 +349,7 @@
                 }
             });
 
-            let html = `
-                <div class="table-wrapper">
-                    <table class="rating-table">
-                        <thead>
-                            <tr>
-                                <th>Место</th>
-                                <th>Игрок</th>
-                                <th class="sortable hide-mobile ${currentSortBy === 'games' ? 'active' : ''}" onclick="sortBy('games')">Игр</th>
-                                <th class="sortable ${currentSortBy === 'points' ? 'active' : ''}" onclick="sortBy('points')">Очки</th>
-                                <th class="sortable ${currentSortBy === 'average' ? 'active' : ''}" onclick="sortBy('average')">Среднее</th>
-                                <th class="sortable hide-mobile ${currentSortBy === 'wins' ? 'active' : ''}" onclick="sortBy('wins')">Побед</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
+            // ✅ Безопасный рендеринг таблицы
             // Функция для получения значения по критерию сортировки
             const getValue = (player) => {
                 switch(currentSortBy) {
@@ -329,42 +370,114 @@
             let rank = 1;
             rating.forEach((player, index) => {
                 player.rank = rank;
-                // Если следующий игрок имеет другое значение, увеличиваем ранг
                 if (index < rating.length - 1 && getValue(rating[index + 1]) !== getValue(player)) {
                     rank = index + 2;
                 }
             });
+
+            // Создаем table wrapper
+            const tableWrapper = createElement('div', { className: 'table-wrapper' });
+
+            // Создаем таблицу
+            const table = createElement('table', { className: 'rating-table' });
+
+            // Создаем thead
+            const thead = createElement('thead');
+            const headerRow = createElement('tr');
+
+            // Заголовки колонок
+            headerRow.appendChild(createElement('th', { textContent: 'Место' }));
+            headerRow.appendChild(createElement('th', { textContent: 'Игрок' }));
+
+            headerRow.appendChild(createElement('th', {
+                className: `sortable hide-mobile ${currentSortBy === 'games' ? 'active' : ''}`,
+                textContent: 'Игр',
+                onclick: () => sortBy('games')
+            }));
+
+            headerRow.appendChild(createElement('th', {
+                className: `sortable ${currentSortBy === 'points' ? 'active' : ''}`,
+                textContent: 'Очки',
+                onclick: () => sortBy('points')
+            }));
+
+            headerRow.appendChild(createElement('th', {
+                className: `sortable ${currentSortBy === 'average' ? 'active' : ''}`,
+                textContent: 'Среднее',
+                onclick: () => sortBy('average')
+            }));
+
+            headerRow.appendChild(createElement('th', {
+                className: `sortable hide-mobile ${currentSortBy === 'wins' ? 'active' : ''}`,
+                textContent: 'Побед',
+                onclick: () => sortBy('wins')
+            }));
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Создаем tbody
+            const tbody = createElement('tbody');
 
             rating.forEach(player => {
                 const rankClass = player.rank <= 3 ? `rank-${player.rank}` : '';
                 const pointsClass = player.total_points > 0 ? 'points-positive' :
                                    player.total_points < 0 ? 'points-negative' : '';
 
-                // Вычисляем средний балл
                 const avgPoints = player.games_played > 0
                     ? (player.total_points / player.games_played).toFixed(2)
                     : '0.00';
 
-                html += `
-                    <tr onclick="openPlayer(${player.id})">
-                        <td class="rank-cell ${rankClass}">${player.rank}</td>
-                        <td class="player-name">${player.name}</td>
-                        <td class="hide-mobile">${player.games_played}</td>
-                        <td class="${pointsClass}">${player.total_points > 0 ? '+' : ''}${player.total_points}</td>
-                        <td>${avgPoints}</td>
-                        <td class="hide-mobile">${player.wins}</td>
-                    </tr>
-                `;
+                const row = createElement('tr', {
+                    onclick: () => openPlayer(player.id)
+                });
+
+                row.appendChild(createElement('td', {
+                    className: `rank-cell ${rankClass}`,
+                    textContent: String(player.rank)
+                }));
+
+                row.appendChild(createElement('td', {
+                    className: 'player-name',
+                    textContent: player.name
+                }));
+
+                row.appendChild(createElement('td', {
+                    className: 'hide-mobile',
+                    textContent: String(player.games_played)
+                }));
+
+                row.appendChild(createElement('td', {
+                    className: pointsClass,
+                    textContent: `${player.total_points > 0 ? '+' : ''}${player.total_points}`
+                }));
+
+                row.appendChild(createElement('td', {
+                    textContent: avgPoints
+                }));
+
+                row.appendChild(createElement('td', {
+                    className: 'hide-mobile',
+                    textContent: String(player.wins)
+                }));
+
+                tbody.appendChild(row);
             });
 
-            html += `
-                    </tbody>
-                </table>
-                <div class="mobile-scroll-hint">← Свайп для прокрутки →</div>
-            </div>
-            `;
+            table.appendChild(tbody);
+            tableWrapper.appendChild(table);
 
-            document.getElementById('content').innerHTML = html;
+            // Добавляем подсказку
+            const hint = createElement('div', {
+                className: 'mobile-scroll-hint',
+                textContent: '← Свайп для прокрутки →'
+            });
+            tableWrapper.appendChild(hint);
+
+            // Очищаем content и добавляем новую таблицу
+            const content = document.getElementById('content');
+            clearElement(content);
+            content.appendChild(tableWrapper);
         }
 
         function openPlayer(playerId) {
