@@ -2,6 +2,7 @@
 // Использует Turso (SQLite) вместо Cloudflare D1
 
 import { createClient } from '@libsql/client/web';
+import { corsMiddleware } from './middleware/cors.js';
 
 // Инициализация Turso клиента
 function getDB() {
@@ -17,15 +18,8 @@ export default async function handler(request, response) {
 
   console.log('API Request:', { method, path, query: request.query });
 
-  // CORS headers
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  // CORS preflight
-  if (method === 'OPTIONS') {
-    return response.status(200).end();
-  }
+  // CORS protection - only allow requests from allowed origins
+  if (corsMiddleware(request, response)) return; // Preflight handled
 
   const db = getDB();
 
