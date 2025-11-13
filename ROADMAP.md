@@ -142,37 +142,38 @@ git branch -a | grep -E "staging|develop|main"
 - ✅ Push в `staging` → автоматический deploy
 - ✅ Push в `main` → CANCELED (не деплоится автоматически)
 
-#### 0.3 Создание staging базы данных (30 минут) ✅ ЗАВЕРШЕНО
-- [x] Создать staging БД в Cloudflare D1 (не Turso!)
-- [x] Импортировать схему (schema.sql)
-- [x] Импортировать данные (25 игроков, 9 сессий, 8 игр, 80 результатов)
-- [x] Проверить данные в staging БД
-- [x] Добавить feature flags в Vercel environment
+#### 0.3 Создание staging базы данных (30 минут) ⏳ ТРЕБУЕТ TURSO АВТОРИЗАЦИИ
+- [ ] Авторизоваться в Turso CLI (`turso auth login`)
+- [ ] Проверить существующие Turso БД (`turso db list`)
+- [ ] Создать staging БД в Turso
+- [ ] Получить credentials для staging БД
+- [ ] Добавить TURSO_DATABASE_URL в Vercel environment
+- [ ] Добавить TURSO_AUTH_TOKEN в Vercel environment
+- [ ] Проверить подключение к staging БД
 
-**Что сделано:**
+**Команды для выполнения:**
 ```bash
-# Создана staging БД в Cloudflare D1
-wrangler d1 create mafia-rating-staging
-# Database ID: 6f661c0b-cc21-499b-bcb4-4fdc825eb229
-# Region: EEUR
+# 1. Авторизация в Turso (требует браузер)
+turso auth login
 
-# Импортирована схема и данные
-wrangler d1 execute mafia-rating-staging --remote --file=schema.sql
-wrangler d1 execute mafia-rating-staging --remote --file=data_players.sql
-wrangler d1 execute mafia-rating-staging --remote --file=data_sessions.sql
-wrangler d1 execute mafia-rating-staging --remote --file=data_games.sql
-wrangler d1 execute mafia-rating-staging --remote --file=data_results.sql
+# 2. Список существующих БД
+turso db list
 
-# Добавлены feature flags через Vercel CLI
-vercel env add FEATURE_XSS_PROTECTION preview staging
-vercel env add FEATURE_STRICT_CORS preview staging
+# 3. Создать staging БД
+turso db create mafclubscore-staging
+
+# 4. Получить URL и токен
+turso db show mafclubscore-staging
+
+# 5. Добавить в Vercel через CLI
+echo "<TURSO_URL>" | vercel env add TURSO_DATABASE_URL preview staging
+echo "<TURSO_TOKEN>" | vercel env add TURSO_AUTH_TOKEN preview staging
 ```
 
 **Проверка выполнения:**
 ```bash
-# Проверить staging БД
-wrangler d1 execute mafia-rating-staging --remote --command "SELECT COUNT(*) FROM players"
-# Результат: 25 игроков ✅
+# Проверить что env vars добавлены
+vercel env ls --token <TOKEN>
 ```
 
 #### 0.4 Настройка CI/CD с GitHub Actions (2 часа) ✅
@@ -937,7 +938,7 @@ git branch -a  # Проверить текущие ветки
 
 ---
 
-2025-01-13 | Настройка staging инфраструктуры (Фазы 0.2 и 0.3) | ✅ ЗАВЕРШЕНО | 30 минут |
+2025-01-13 | Настройка Vercel Environment Variables (Фаза 0.2) | ✅ ЗАВЕРШЕНО | 10 минут |
 
   Что сделано:
 
@@ -947,44 +948,25 @@ git branch -a  # Проверить текущие ветки
   - Добавлен FEATURE_STRICT_CORS=true для Preview (staging branch)
   - Обе переменные зашифрованы и готовы к использованию
 
-  **Cloudflare D1 Staging Database (через wrangler CLI):**
-  - Создана новая БД: mafia-rating-staging
-  - Database ID: 6f661c0b-cc21-499b-bcb4-4fdc825eb229
-  - Region: EEUR (Eastern Europe)
-  - Импортирована схема из schema.sql (4 таблицы)
-  - Импортированы данные:
-    * 25 игроков (data_players.sql)
-    * 9 сессий (data_sessions.sql)
-    * 8 игр (data_games.sql)
-    * 80 результатов (data_results.sql)
-  - Проверка данных: все 4 таблицы заполнены корректно
-
   Технические детали:
   - Использован Vercel CLI с токеном для автоматизации
-  - Использован wrangler CLI с Cloudflare API токеном
   - Все операции выполнены через API без ручного вмешательства
-  - Staging БД полностью изолирована от production
+  - Feature flags включены только для staging ветки (Preview)
 
   Выводы:
-  - Staging окружение полностью настроено автоматически
-  - Feature flags включены только для staging ветки
-  - Staging БД содержит копию production данных
-  - Готово к ручному тестированию XSS и CORS защит
-  - Проект использует Cloudflare D1, а не Turso (исправлено в документации)
+  - Feature flags настроены корректно
+  - Готово к тестированию XSS и CORS защит на staging
+  - Проект использует Turso (libSQL) для БД, не Cloudflare D1
 
   Следующие шаги:
-  - Обновить чекбоксы для Фаз 0.2 и 0.3 (отметить как завершённые)
-  - Добавить staging DB credentials в Vercel environment (опционально)
+  - Фаза 0.3: Настроить Turso staging БД (требуется авторизация)
+  - Добавить TURSO_DATABASE_URL и TURSO_AUTH_TOKEN в Vercel
   - Начать ручное тестирование на staging (24-48 часов)
-  - Мониторинг ошибок через Vercel и Cloudflare логи
 
   Команды для проверки:
   ```bash
   # Проверить Vercel env vars
   vercel env ls --token <TOKEN>
-
-  # Проверить staging БД
-  wrangler d1 execute mafia-rating-staging --remote --command "SELECT COUNT(*) FROM players"
   ```
 
 ---
