@@ -239,8 +239,8 @@ console.log(FeatureFlags.getAllFlags());
 - [x] Дождаться прохождения CI/CD (все проверки прошли ✅)
 - [x] Code review (если есть кто)
 - [x] Merge в `develop` (завершено ✅)
-- [ ] PR: `develop` → `staging`
-- [ ] Deploy на staging (автоматически)
+- [x] PR: `develop` → `staging` (PR #3)
+- [x] Deploy на staging (автоматически ✅)
 - [ ] Добавить в Vercel staging: `FEATURE_XSS_PROTECTION=true`
 - [ ] Ручное тестирование на staging (24-48 часов)
 - [ ] Попробовать XSS атаку: `<script>alert("XSS")</script>` в разных полях
@@ -270,9 +270,10 @@ console.log(FeatureFlags.getAllFlags());
 - [x] Обновить все 7 API endpoints (заменить `*` на проверку origin)
 - [x] Написать тесты для CORS (использованы существующие)
 - [x] Push → PR: `feature/strict-cors` → `develop` (PR #2)
+- [x] Merge в `develop` (завершено ✅)
+- [x] Deploy на staging через процесс (develop → staging) (PR #3)
 - [ ] Тест: запрос с `https://score.mafclub.biz` → должен пройти
 - [ ] Тест: запрос с `https://evil.com` → должен быть заблокирован
-- [ ] Deploy на staging через процесс (develop → staging)
 - [ ] Добавить флаг: `FEATURE_STRICT_CORS=true` на staging
 - [ ] Тестирование: запросы работают только с разрешенных доменов
 - [ ] Deploy на production с флагом
@@ -888,5 +889,42 @@ git branch -a  # Проверить текущие ветки
   - Фаза 0, Задача 0.3: Создание staging базы данных в Turso
   - Время: ~30 минут
   - Цель: Изолировать staging окружение с отдельной БД для безопасного тестирования
+
+---
+
+2025-01-13 | Deploy XSS + CORS Protection → Staging (Фазы 1.1 и 1.2) | ✅ ЗАВЕРШЕНО | 1 час |
+
+  Что сделано:
+  - Смержен PR #1 (XSS Protection) в develop после разрешения конфликтов
+  - Смержен PR #2 (CORS Protection) в develop
+  - Создан PR #3 (develop → staging) с обеими защитами
+  - Смержен PR #3 в staging - автоматический deploy запущен
+  - Обе критические защиты безопасности теперь на staging:
+    * XSS Protection: js/utils/dom-safe.js + все 6 HTML файлов защищены
+    * CORS Protection: api/middleware/cors.js + все 7 API endpoints обновлены
+
+  CI/CD статус:
+  - Все проверки прошли: ✅ lint, ✅ security, ✅ unit-tests (Node 18 + 20)
+  - Vercel автоматически задеплоил на staging environment
+  - Cloudflare Workers также обновлены
+
+  Выводы:
+  - Процесс безопасного деплоя работает отлично (feature → develop → staging)
+  - GitHub branch protection и CI/CD предотвращают ошибки
+  - Обе защиты независимы и не конфликтуют друг с другом
+  - Feature flags готовы к использованию для включения защит
+
+  Следующие шаги:
+  - Фаза 0.2: Настроить Vercel environment variables для staging
+    * Добавить FEATURE_XSS_PROTECTION=true
+    * Добавить FEATURE_STRICT_CORS=true
+  - Фаза 0.3: Создать staging БД в Turso (если нужна)
+  - Ручное тестирование обеих защит на staging (24-48 часов)
+  - Мониторинг ошибок через Vercel/Cloudflare логи
+
+  Обновлённые чекбоксы:
+  - ✅ Фаза 1.1: PR merge в develop и staging
+  - ✅ Фаза 1.2: PR merge в develop и staging
+  - ⏳ Осталось: настройка feature flags и тестирование
 
 ---
