@@ -250,7 +250,7 @@ console.log(FeatureFlags.getAllFlags());
 - [x] Merge в `develop` (завершено ✅)
 - [x] PR: `develop` → `staging` (PR #3)
 - [x] Deploy на staging (автоматически ✅)
-- [ ] Добавить в Vercel staging: `FEATURE_XSS_PROTECTION=true`
+- [x] Добавить в Vercel staging: `FEATURE_XSS_PROTECTION=true` (Preview/staging)
 - [ ] Ручное тестирование на staging (24-48 часов)
 - [ ] Попробовать XSS атаку: `<script>alert("XSS")</script>` в разных полях
 - [ ] Проверить Sentry - нет новых ошибок?
@@ -281,9 +281,9 @@ console.log(FeatureFlags.getAllFlags());
 - [x] Push → PR: `feature/strict-cors` → `develop` (PR #2)
 - [x] Merge в `develop` (завершено ✅)
 - [x] Deploy на staging через процесс (develop → staging) (PR #3)
+- [x] Добавить флаг: `FEATURE_STRICT_CORS=true` на staging (Preview/staging)
 - [ ] Тест: запрос с `https://score.mafclub.biz` → должен пройти
 - [ ] Тест: запрос с `https://evil.com` → должен быть заблокирован
-- [ ] Добавить флаг: `FEATURE_STRICT_CORS=true` на staging
 - [ ] Тестирование: запросы работают только с разрешенных доменов
 - [ ] Deploy на production с флагом
 - [ ] Постепенное включение
