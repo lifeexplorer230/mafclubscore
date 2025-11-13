@@ -1,24 +1,6 @@
 {
   "version": 2,
   "name": "mafclubscore",
-  "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "handle": "filesystem"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "github": {
     "enabled": true,
     "silent": false
