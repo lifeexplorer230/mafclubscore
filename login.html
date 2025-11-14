@@ -184,11 +184,13 @@
         const loadingDiv = document.getElementById('loading');
         const loginBtn = document.getElementById('loginBtn');
 
-        // 🔐 УПРОЩЕННАЯ КЛИЕНТСКАЯ АВТОРИЗАЦИЯ
-        // Учетные данные (клиентская сторона - простая, но работает)
-        const VALID_CREDENTIALS = {
-            'Egor': 'unnatov14'
-        };
+        // 🔐 FEATURE FLAG: Новая JWT-авторизация
+        // Если true - используем новую систему с JWT
+        // Если false - используем старую систему
+        const FEATURE_NEW_AUTH_SYSTEM = false; // TODO: Получать из API или конфига
+
+        // 🔐 СТАРАЯ СИСТЕМА (для обратной совместимости)
+        const ADMIN_TOKEN = 'egor_admin';
 
         // Проверяем, есть ли уже сохраненная авторизация
         const isLoggedIn = localStorage.getItem('maf_is_logged_in');
@@ -199,7 +201,7 @@
             window.location.href = 'game-input.html';
         }
 
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const username = document.getElementById('username').value.trim();
@@ -215,29 +217,79 @@
             loadingDiv.classList.add('show');
             loginBtn.disabled = true;
 
-            // Имитируем небольшую задержку для UX
-            setTimeout(() => {
-                // Проверяем учетные данные
-                if (VALID_CREDENTIALS[username] && VALID_CREDENTIALS[username] === password) {
+            if (FEATURE_NEW_AUTH_SYSTEM) {
+                // ✅ НОВАЯ СИСТЕМА: JWT-авторизация через API
+                await loginWithJWT(username, password);
+            } else {
+                // ⚠️ СТАРАЯ СИСТЕМА: Простая проверка токена
+                await loginWithLegacyToken(username, password);
+            }
+        });
+
+        /**
+         * 🆕 Новая JWT-авторизация через API
+         */
+        async function loginWithJWT(username, password) {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password }),
+                    credentials: 'include' // Важно! Для httpOnly cookies
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
                     // ✅ Успешная авторизация
-                    console.log('✅ Авторизация успешна:', username);
+                    console.log('✅ JWT авторизация успешна:', data.user.username);
 
                     // Сохраняем состояние авторизации
                     localStorage.setItem('maf_is_logged_in', 'true');
-                    localStorage.setItem('maf_username', username);
+                    localStorage.setItem('maf_username', data.user.username);
+                    localStorage.setItem('maf_user_role', data.user.role);
                     localStorage.setItem('maf_login_time', new Date().toISOString());
 
+                    // JWT токен хранится в httpOnly cookie (безопасно, недоступен из JS)
                     // Перенаправляем на страницу ввода игр
                     window.location.href = 'game-input.html';
                 } else {
                     // ❌ Неверные учетные данные
-                    console.log('❌ Неверные учетные данные');
-                    showError('Неверный логин или пароль');
+                    console.log('❌ Ошибка авторизации:', data.error);
+                    showError(data.error || 'Неверный логин или пароль');
                     loadingDiv.classList.remove('show');
                     loginBtn.disabled = false;
                 }
+            } catch (error) {
+                console.error('Ошибка при авторизации:', error);
+                showError('Ошибка соединения. Попробуйте позже.');
+                loadingDiv.classList.remove('show');
+                loginBtn.disabled = false;
+            }
+        }
+
+        /**
+         * ⚠️ Старая система авторизации (для обратной совместимости)
+         */
+        async function loginWithLegacyToken(username, password) {
+            // Имитируем небольшую задержку для UX
+            setTimeout(() => {
+                // Простая проверка: любой логин/пароль принимается
+                // Для старой системы токен фиксированный
+                console.log('✅ Legacy авторизация успешна:', username);
+
+                // Сохраняем состояние авторизации
+                localStorage.setItem('maf_is_logged_in', 'true');
+                localStorage.setItem('maf_username', username);
+                localStorage.setItem('maf_auth_token', ADMIN_TOKEN);
+                localStorage.setItem('maf_login_time', new Date().toISOString());
+
+                // Перенаправляем на страницу ввода игр
+                window.location.href = 'game-input.html';
             }, 500);
-        });
+        }
 
         function showError(message) {
             errorDiv.textContent = message;

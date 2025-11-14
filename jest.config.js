@@ -8,7 +8,8 @@ export default {
     "**/__tests__/**/smoke.test.js",
     "**/__tests__/**/feature-flags.test.js",
     "**/__tests__/**/dom-safe.test.js",
-    "**/__tests__/**/game-validator.test.js"
+    "**/__tests__/**/game-validator.test.js",
+    "**/__tests__/**/jwt-auth.test.js"
     // TODO: Fix and re-enable rating_calculator.test.js and api.test.js
     // These tests have import issues and need refactoring (Phase 2)
   ],
