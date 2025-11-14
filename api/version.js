@@ -7,7 +7,7 @@
 
 export default async function handler(request, response) {
   try {
-    const version = process.env.APP_VERSION || 'v1.6.0';
+    const version = process.env.APP_VERSION || 'v1.7.0';
     const environment = process.env.VERCEL_ENV || 'development';
 
     return response.status(200).json({
