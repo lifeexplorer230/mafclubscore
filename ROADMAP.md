@@ -229,12 +229,21 @@ feature/* → develop → staging → main → production
 - [x] Unit test coverage началось ✅ v1.14.0
   - [x] Тесты для utils (escapeHtml, createElement, formatDate)
   - [ ] Тесты для API модулей
-  - [ ] Достичь 80% coverage
+  - [x] Code coverage thresholds настроены ✅ v1.14.1 (60% lines, 50% functions)
+- [x] Integration тесты для API ✅ v1.14.1
+  - [x] Тесты всех 7 API endpoints
+  - [x] Security тесты (SQL injection, XSS)
+  - [x] Performance тесты (response time)
+  - [x] Concurrent requests тесты
 - [x] Написать E2E для всех страниц ✅ (38 тестов)
 - [x] Добавить performance тесты ✅ v1.14.0
   - [x] Lighthouse CI workflow
   - [x] Performance budget assertions
   - [x] Автоматические PR комментарии
+- [x] Load тесты с k6 ✅ v1.14.1
+  - [x] k6 load test script (50 concurrent users)
+  - [x] GitHub Actions workflow для load тестов
+  - [x] Проверка p95 < 2s
 - [ ] Visual regression тесты (опционально)
 
 #### 1.2 Автоматизация процессов
@@ -249,11 +258,15 @@ feature/* → develop → staging → main → production
   - [x] Conventional commits анализ
 - [ ] Dependency updates (Renovate)
 
-#### 1.3 Улучшение мониторинга
+#### 1.3 Улучшение мониторинга ✅ ЗАВЕРШЕНО
 - [x] API health checks каждые 5 мин ✅ v1.13.1
   - [x] GitHub Actions workflow для проверки API
   - [x] Автоматическое создание issues при сбоях
   - [x] Проверка response time
+- [x] Code coverage reporting ✅ v1.14.1
+  - [x] GitHub Actions workflow с coverage reports
+  - [x] Coverage badge в PR комментариях
+  - [x] Fail build при низком coverage
 - [ ] Uptime monitoring (BetterUptime) - опционально
 - [ ] Performance monitoring (Web Vitals)
 - [ ] Custom alerts в Sentry
@@ -535,6 +548,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ---
 
 ## CHANGELOG
+
+
+### v1.13.3 (2025-11-14)
+**Тип**: Patch
+**Изменения**: docs: Update Phase 1.1 and 1.3 progress (integration tests, load tests, coverage)
+
 
 
 ### v1.13.2 (2025-11-14)
