@@ -1,8 +1,8 @@
 # 📦 Версионирование проекта MafClubScore
 
-**Текущая версия:** v1.1.1
-**Дата релиза:** 2025-01-13 23:15 UTC
-**Deployment ID:** 4CHE1iXwtRPYcphsyHyJverGe1BF
+**Текущая версия:** v1.1.2
+**Дата релиза:** 2025-01-14 07:00 UTC
+**Deployment ID:** GGCvy6BpAbkbv7AwVbkkjWWAzwvN
 
 ---
 
@@ -52,6 +52,53 @@ git push origin main
 ---
 
 ## 📚 ИСТОРИЯ ВЕРСИЙ
+
+### v1.1.2 (2025-01-14) 🐛 HOTFIX - Dynamic CORS Middleware
+
+**Deployment:** Vercel Production
+**URL:** https://score.mafclub.biz
+**Commit:** 35ea7ed (fix: Remove CORS headers from vercel.json)
+
+#### ✅ Что исправлено:
+
+**Проблема:** Production всё ещё возвращал `Access-Control-Allow-Origin: *` после v1.1.1
+
+**Причина:** CORS headers в `vercel.json` переопределяли динамический middleware из `api/middleware/cors.js`
+
+**Решение:**
+- ❌ Удалены CORS headers из `vercel.json` (Access-Control-Allow-Origin, Allow-Methods, Allow-Headers, Allow-Credentials)
+- ✅ CORS теперь контролируется **ТОЛЬКО** через `api/middleware/cors.js`
+- ✅ Динамическая проверка Origin - блокировка неразрешённых доменов
+- ✅ Добавлен security header: `X-XSS-Protection: 1; mode=block`
+
+**Security headers в vercel.json (применяются ко всем routes):**
+- ✅ `X-Frame-Options: DENY`
+- ✅ `X-Content-Type-Options: nosniff`
+- ✅ `Referrer-Policy: strict-origin-when-cross-origin`
+- ✅ `X-XSS-Protection: 1; mode=block`
+
+#### 📊 Метрики:
+
+- Файлов изменено: 1 (`vercel.json`)
+- Строк изменено: -17 CORS headers, +4 security headers
+- Security issues fixed: **CORS wildcard полностью устранён ✅**
+
+#### 🔄 Breaking changes:
+
+**НЕТ** - обратная совместимость сохранена
+
+#### ✅ Тестирование:
+
+1. **Разрешённый Origin (score.mafclub.biz):**
+   - ✅ Возвращает: `Access-Control-Allow-Origin: https://score.mafclub.biz`
+
+2. **НЕразрешённый Origin (evil.com):**
+   - ✅ НЕ возвращает `Access-Control-Allow-Origin` (блокирован)
+
+3. **Security Headers:**
+   - ✅ Все headers присутствуют на всех routes
+
+---
 
 ### v1.1.1 (2025-01-13) 🐛 HOTFIX - CORS Protection
 
