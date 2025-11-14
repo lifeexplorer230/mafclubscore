@@ -214,7 +214,11 @@ feature/* → develop → staging → main → production
   - [x] Состояние загрузки
   - [x] Навигация с рейтинга на игрока
   - [x] Кликабельные ссылки на игры
-- [ ] Добавить в CI/CD pipeline (следующий этап)
+- [x] Добавить в CI/CD pipeline ✅ v1.12.0
+  - [x] GitHub Actions workflow для E2E тестов
+  - [x] Автоматический запуск на push в main/develop
+  - [x] PR checks с версионной консистентностью
+  - [x] Upload артефактов (скриншоты, отчёты)
 
 ---
 
