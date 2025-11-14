@@ -3,6 +3,7 @@
 
 import { createClient } from '@libsql/client';
 import { corsMiddleware } from './middleware/cors.js';
+import { validateGameSession } from './validators/game-validator.js';
 
 // Инициализация Turso клиента
 function getDB() {
@@ -331,9 +332,13 @@ async function deleteGame(db, request, response, gameId) {
 async function saveSession(db, request, response) {
   const sessionData = request.body;
 
-  if (!sessionData.date || !sessionData.games || !Array.isArray(sessionData.games)) {
+  // Валидация входных данных с помощью Zod
+  const validation = validateGameSession(sessionData);
+
+  if (!validation.success) {
     return response.status(400).json({
-      error: 'Неверный формат данных'
+      error: validation.message || 'Неверный формат данных',
+      details: validation.errors
     });
   }
 
