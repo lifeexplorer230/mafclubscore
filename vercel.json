@@ -27,6 +27,12 @@
   "env": {
     "NODE_ENV": "production"
   },
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "develop": false
+    }
+  },
   "github": {
     "enabled": true,
     "silent": false
