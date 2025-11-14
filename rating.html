@@ -238,19 +238,24 @@
         let currentSortBy = 'points';
 
         async function loadRating() {
+            console.log('🔄 loadRating started');
             try {
+                console.log('📡 Calling api.getRating()...');
                 // Загружаем из API через модуль
                 const data = await api.getRating();
+                console.log('✅ API response:', data);
 
                 // API возвращает {success: true, players: [...]}
                 if (data.success && data.players) {
+                    console.log(`📊 Got ${data.players.length} players`);
                     allPlayers = data.players;
                     displayRating();
+                    console.log('✅ displayRating() completed');
                 } else {
                     throw new Error('Неверный формат данных от API');
                 }
             } catch (error) {
-                console.error('Ошибка загрузки:', error);
+                console.error('❌ Ошибка загрузки:', error);
 
                 // Используем утилиту showError из модуля ui.js
                 showError('#content', 'Ошибка загрузки данных', error.message);
