@@ -391,10 +391,13 @@
             }
 
             try {
+                // Get auth token from localStorage (set during login)
+                const authToken = localStorage.getItem('maf_auth_token') || 'egor_admin';
+
                 const response = await fetch(`/api/games/${gameId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': 'Bearer egor_admin'
+                        'Authorization': `Bearer ${authToken}`
                     }
                 });
 

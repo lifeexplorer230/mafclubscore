@@ -584,9 +584,9 @@
             document.getElementById('content').innerHTML = html;
 
             // Показываем кнопку удаления для авторизованных
-            const authToken = localStorage.getItem('auth_token');
-            console.log('Auth token:', authToken); // Отладка
-            const isLoggedIn = authToken === 'egor_admin';
+            // Check both old and new auth token keys for compatibility
+            const authToken = localStorage.getItem('maf_auth_token') || localStorage.getItem('auth_token');
+            const isLoggedIn = localStorage.getItem('maf_is_logged_in') === 'true' && authToken;
             console.log('Is logged in:', isLoggedIn); // Отладка
 
             if (isLoggedIn) {

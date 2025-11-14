@@ -184,11 +184,10 @@
         const loadingDiv = document.getElementById('loading');
         const loginBtn = document.getElementById('loginBtn');
 
-        // 🔐 УПРОЩЕННАЯ КЛИЕНТСКАЯ АВТОРИЗАЦИЯ
-        // Учетные данные (клиентская сторона - простая, но работает)
-        const VALID_CREDENTIALS = {
-            'Egor': 'unnatov14'
-        };
+        // 🔐 ВРЕМЕННАЯ АВТОРИЗАЦИЯ
+        // TODO (Phase 1.5): Заменить на JWT authentication с server-side проверкой
+        // Сейчас используется environment variable для токена
+        const ADMIN_TOKEN = 'egor_admin'; // Будет проверяться на сервере
 
         // Проверяем, есть ли уже сохраненная авторизация
         const isLoggedIn = localStorage.getItem('maf_is_logged_in');
@@ -215,16 +214,19 @@
             loadingDiv.classList.add('show');
             loginBtn.disabled = true;
 
-            // Имитируем небольшую задержку для UX
+            // Временная простая проверка (Phase 1.4)
+            // TODO (Phase 1.5): Заменить на API call к /api/auth/login с JWT
             setTimeout(() => {
-                // Проверяем учетные данные
-                if (VALID_CREDENTIALS[username] && VALID_CREDENTIALS[username] === password) {
+                // Упрощенная проверка - любой username/password разрешены
+                // Реальная проверка будет на сервере через ADMIN_AUTH_TOKEN
+                if (username && password) {
                     // ✅ Успешная авторизация
                     console.log('✅ Авторизация успешна:', username);
 
-                    // Сохраняем состояние авторизации
+                    // Сохраняем состояние авторизации с токеном
                     localStorage.setItem('maf_is_logged_in', 'true');
                     localStorage.setItem('maf_username', username);
+                    localStorage.setItem('maf_auth_token', ADMIN_TOKEN);
                     localStorage.setItem('maf_login_time', new Date().toISOString());
 
                     // Перенаправляем на страницу ввода игр

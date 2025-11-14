@@ -289,10 +289,12 @@ describe('API Эндпоинты', () => {
       createClient.mockReturnValue({ execute: mockExecute });
 
       const handler = (await import('../api/games/[id].js')).default;
+      // TODO (Phase 1.5): Update to use environment variable ADMIN_AUTH_TOKEN
+      const authToken = process.env.ADMIN_AUTH_TOKEN || 'egor_admin';
       const req = {
         method: 'DELETE',
         query: { id: '1' },
-        headers: { authorization: 'Bearer egor_admin' }
+        headers: { authorization: `Bearer ${authToken}` }
       };
       const res = {
         status: jest.fn().mockReturnThis(),

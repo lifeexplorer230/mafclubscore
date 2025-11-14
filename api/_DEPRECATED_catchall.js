@@ -297,7 +297,9 @@ async function getGameDetails(db, response, gameId) {
 
 async function deleteGame(db, request, response, gameId) {
   const authHeader = request.headers.authorization;
-  if (!authHeader || authHeader !== 'Bearer egor_admin') {
+  const expectedToken = `Bearer ${process.env.ADMIN_AUTH_TOKEN || 'egor_admin'}`;
+
+  if (!authHeader || authHeader !== expectedToken) {
     return response.status(401).json({ error: 'Unauthorized' });
   }
 
