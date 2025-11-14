@@ -6,6 +6,8 @@
  * Устраняет дублирование функций рендеринга.
  */
 
+import { escapeHtml } from '../utils/dom-safe.js';
+
 /**
  * Создаёт DOM элемент с атрибутами и детьми
  * @param {string} tag - Тег элемента (div, span, a, etc.)
@@ -78,7 +80,7 @@ export function showLoader(container, message = 'Загрузка...') {
         animation: spin 1s linear infinite;
         margin: 0 auto 20px;
       "></div>
-      <p style="opacity: 0.8;">${message}</p>
+      <p style="opacity: 0.8;">${escapeHtml(message)}</p>
     </div>
     <style>
       @keyframes spin {
@@ -119,8 +121,8 @@ export function showError(container, message, details = '') {
     ">
       <div style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
       <h3 style="margin-bottom: 10px; font-size: 1.5rem;">Ошибка</h3>
-      <p style="font-size: 1.1rem; margin-bottom: 10px;">${message}</p>
-      ${details ? `<p style="font-size: 0.9rem; opacity: 0.7;">${details}</p>` : ''}
+      <p style="font-size: 1.1rem; margin-bottom: 10px;">${escapeHtml(message)}</p>
+      ${details ? `<p style="font-size: 0.9rem; opacity: 0.7;">${escapeHtml(details)}</p>` : ''}
     </div>
   `;
 }
@@ -145,7 +147,7 @@ export function showSuccess(container, message) {
       margin: 20px 0;
     ">
       <div style="font-size: 3rem; margin-bottom: 15px;">✅</div>
-      <p style="font-size: 1.1rem;">${message}</p>
+      <p style="font-size: 1.1rem;">${escapeHtml(message)}</p>
     </div>
   `;
 }
