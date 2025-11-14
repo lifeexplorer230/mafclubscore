@@ -225,10 +225,10 @@ feature/* → develop → staging → main → production
 ### ФАЗА 1: СТАБИЛИЗАЦИЯ И ТЕСТИРОВАНИЕ 🟡
 **Срок:** 1 неделя | **Приоритет:** ВЫСОКИЙ
 
-#### 1.1 Улучшение тестового покрытия
+#### 1.1 Улучшение тестового покрытия ✅ ЗАВЕРШЕНО
 - [x] Unit test coverage началось ✅ v1.14.0
   - [x] Тесты для utils (escapeHtml, createElement, formatDate)
-  - [ ] Тесты для API модулей
+  - [x] Тесты для API модулей ✅ v1.14.2 (api.js, auth.js - 628 строк)
   - [x] Code coverage thresholds настроены ✅ v1.14.1 (60% lines, 50% functions)
 - [x] Integration тесты для API ✅ v1.14.1
   - [x] Тесты всех 7 API endpoints
@@ -283,8 +283,17 @@ feature/* → develop → staging → main → production
 **Срок:** 2 недели | **Приоритет:** СРЕДНИЙ
 
 #### 2.1 Database оптимизация
-- [ ] Индексы для частых запросов
-- [ ] Connection pooling улучшения
+- [x] Индексы для частых запросов ✅ v1.14.2
+  - [x] 9 индексов для games, game_results, players таблиц
+  - [x] Migration script (scripts/migrations/001_add_indexes.sql)
+  - [x] Apply script (scripts/apply-indexes.js)
+- [x] Connection pooling улучшения ✅ v1.14.2
+  - [x] Health checks каждую минуту
+  - [x] Automatic reconnection при сбоях
+  - [x] Retry logic с exponential backoff
+  - [x] Performance metrics (success rate, avg response time)
+  - [x] Graceful shutdown handlers
+  - [x] Документация (docs/CONNECTION_POOLING.md)
 - [ ] Query optimization (explain analyze)
 - [ ] Кэширование (Redis)
 
@@ -548,6 +557,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ---
 
 ## CHANGELOG
+
+
+### v1.13.4 (2025-11-14)
+**Тип**: Patch
+**Изменения**: docs: Update Phase 1.1 and 2.1 completion status (API tests, DB indexes, pooling)
+
 
 
 ### v1.13.3 (2025-11-14)
