@@ -522,6 +522,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v1.13.0 (2025-11-14)
+**Тип**: Minor
+**Изменения**: feat: Add pre-commit hooks with husky and lint-staged
+
+
+
 ### v1.12.0 (2025-11-14)
 **Тип**: Minor
 **Изменения**: feat: Add CI/CD workflows for E2E tests

@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Проверка синхронизации версий
+echo "🔍 Checking version consistency..."
+PACKAGE_VERSION=$(node -p "require('./package.json').version")
+API_VERSION=$(grep "process.env.APP_VERSION || 'v" api/version.js | sed "s/.*'v\(.*\)'.*/\1/")
+
+if [ "$PACKAGE_VERSION" != "$API_VERSION" ]; then
+  echo "❌ Version mismatch detected!"
+  echo "   package.json: v$PACKAGE_VERSION"
+  echo "   api/version.js: v$API_VERSION"
+  echo ""
+  echo "Please run: node scripts/bump-version.js"
+  exit 1
+fi
+
+echo "✅ Versions are consistent (v$PACKAGE_VERSION)"
+
+# Проверка syntax всех JS файлов
+echo "🔍 Checking JavaScript syntax..."
+find . -name "*.js" -not -path "./node_modules/*" -not -path "./coverage/*" -not -path "./.husky/*" | xargs -I {} node --check {}
+
+if [ $? -ne 0 ]; then
+  echo "❌ JavaScript syntax errors detected!"
+  exit 1
+fi
+
+echo "✅ JavaScript syntax is valid"
+
+# Lint-staged для проверки изменённых файлов
+npx lint-staged

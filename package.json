@@ -1,6 +1,6 @@
 {
   "name": "mafclubdemo",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "МАФ-Клуб Рейтинговая Система",
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:critical": "playwright test --grep @critical",
     "test:e2e:debug": "playwright test --debug",
-    "test:all": "npm test && npm run test:e2e:critical"
+    "test:all": "npm test && npm run test:e2e:critical",
+    "prepare": "husky"
   },
   "keywords": [
     "mafia",
@@ -37,7 +38,17 @@
     "@playwright/test": "^1.56.1",
     "@sentry/browser": "^10.25.0",
     "@testing-library/dom": "^10.4.1",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0"
+    "jest-environment-jsdom": "^30.2.0",
+    "lint-staged": "^16.2.6"
+  },
+  "lint-staged": {
+    "*.js": [
+      "node --check"
+    ],
+    "*.{js,json,md}": [
+      "echo 'Checking file:'"
+    ]
   }
 }
