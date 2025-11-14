@@ -1,602 +1,548 @@
 # 🧪 TESTING GUIDE
 
-## 📊 Testing Strategy Overview
+Полное руководство по тестированию проекта MafClubScore.
 
-```
-Unit Tests (80% coverage) → E2E Tests (critical paths) → Manual Testing (staging) → Production
-     ↓                            ↓                            ↓                      ↓
-  Fast & Many                 User Scenarios              24-48 hours            Monitor
-```
+**Версия:** 1.0
+**Обновлено:** 2025-11-14
 
 ---
 
-## 🎯 Testing Priorities
+## 📋 СОДЕРЖАНИЕ
 
-### Priority 1: Critical User Paths (MUST HAVE)
-- [ ] Загрузка главной страницы (rating.html)
-- [ ] Авторизация (login.html)
-- [ ] Ввод игры (game-input.html)
-- [ ] Отображение статистики игрока
-
-### Priority 2: Core Functionality (SHOULD HAVE)
-- [ ] API endpoints работают
-- [ ] Валидация данных
-- [ ] CORS защита
-- [ ] XSS защита
-
-### Priority 3: Nice to Have
-- [ ] Visual regression
-- [ ] Performance testing
-- [ ] Load testing
+1. [Обзор тестирования](#обзор-тестирования)
+2. [Unit тесты](#unit-тесты)
+3. [E2E тесты](#e2e-тесты)
+4. [Запуск тестов](#запуск-тестов)
+5. [Написание тестов](#написание-тестов)
+6. [CI/CD интеграция](#cicd-интеграция)
+7. [Best Practices](#best-practices)
 
 ---
 
-## 🔧 Setup
+## 🎯 ОБЗОР ТЕСТИРОВАНИЯ
 
-### Установка зависимостей
+### Текущее покрытие
+
+```
+Тип тестов      | Количество | Покрытие | Статус
+----------------|------------|----------|--------
+Unit Tests      | 0          | 0%       | 📝 TODO
+E2E Tests       | 38         | 100%     | ✅ Done
+Integration     | 0          | 0%       | 📝 TODO
+Performance     | 0          | 0%       | 📝 TODO
+```
+
+### Стек технологий
+
+- **Unit Tests:** Jest
+- **E2E Tests:** Playwright
+- **CI/CD:** GitHub Actions
+- **Assertions:** @playwright/test, @jest/globals
+
+---
+
+## 🔬 UNIT ТЕСТЫ
+
+### Конфигурация
+
+**jest.config.js:**
+```javascript
+export default {
+  testEnvironment: 'jsdom',
+  transform: {},
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
+  testMatch: [
+    '**/__tests__/**/*.test.js',
+    '**/?(*.)+(spec|test).js'
+  ],
+  collectCoverageFrom: [
+    'js/**/*.js',
+    'api/**/*.js',
+    '!**/node_modules/**'
+  ]
+};
+```
+
+### Запуск Unit тестов
 
 ```bash
-# Unit testing
-npm install --save-dev jest @testing-library/jest-dom
+# Запустить все тесты
+npm test
 
-# E2E testing
-npm install --save-dev @playwright/test
-npx playwright install chromium --with-deps
+# Watch mode (авто-перезапуск)
+npm run test:watch
 
-# Дополнительно
-npm install --save-dev eslint prettier husky
-```
-
-### Настройка npm scripts
-
-```json
-// package.json
-{
-  "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:critical": "playwright test --grep @critical",
-    "test:all": "npm test && npm run test:e2e:critical",
-    "lint": "eslint .",
-    "format": "prettier --write ."
-  }
-}
-```
-
----
-
-## 🧩 Unit Testing
-
-### Структура тестов
-
-```
-__tests__/
-├── unit/
-│   ├── api/
-│   │   ├── rating.test.js
-│   │   └── validation.test.js
-│   ├── utils/
-│   │   ├── dom-safe.test.js
-│   │   └── feature-flags.test.js
-│   └── modules/
-│       ├── api.test.js
-│       ├── ui.test.js
-│       └── auth.test.js
-└── integration/
-    ├── database.test.js
-    └── auth-flow.test.js
+# С coverage отчётом
+npm run test:coverage
 ```
 
 ### Пример Unit теста
 
+**__tests__/utils.test.js:**
 ```javascript
-// __tests__/unit/utils/dom-safe.test.js
-import { escapeHtml, sanitizeInput } from '../../../js/utils/dom-safe.js';
+import { describe, it, expect } from '@jest/globals';
+import { escapeHtml } from '../js/utils.js';
 
-describe('DOM Safety Utils', () => {
-  describe('escapeHtml', () => {
-    it('should escape HTML tags', () => {
-      const input = '<script>alert("XSS")</script>';
-      const expected = '&lt;script&gt;alert("XSS")&lt;/script&gt;';
-      expect(escapeHtml(input)).toBe(expected);
-    });
+describe('escapeHtml', () => {
+  it('should escape HTML special characters', () => {
+    const input = '<script>alert("XSS")</script>';
+    const expected = '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;';
+    expect(escapeHtml(input)).toBe(expected);
+  });
 
-    it('should handle null and undefined', () => {
-      expect(escapeHtml(null)).toBe('');
-      expect(escapeHtml(undefined)).toBe('');
-    });
+  it('should handle empty string', () => {
+    expect(escapeHtml('')).toBe('');
+  });
 
-    it('should preserve normal text', () => {
-      expect(escapeHtml('Hello World')).toBe('Hello World');
-    });
+  it('should handle null/undefined', () => {
+    expect(escapeHtml(null)).toBe('null');
+    expect(escapeHtml(undefined)).toBe('undefined');
   });
 });
-```
-
-### Testing API Endpoints
-
-```javascript
-// __tests__/unit/api/rating.test.js
-import handler from '../../../api/rating.js';
-
-describe('Rating API', () => {
-  let req, res;
-
-  beforeEach(() => {
-    req = {
-      method: 'GET',
-      headers: { origin: 'https://mafclubscore.vercel.app' }
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      setHeader: jest.fn()
-    };
-  });
-
-  it('should return players list', async () => {
-    await handler(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: true,
-        players: expect.any(Array)
-      })
-    );
-  });
-
-  it('should handle CORS correctly', async () => {
-    await handler(req, res);
-
-    expect(res.setHeader).toHaveBeenCalledWith(
-      'Access-Control-Allow-Origin',
-      'https://mafclubscore.vercel.app'
-    );
-  });
-});
-```
-
-### Coverage Goals
-
-```bash
-# Запустить с coverage
-npm run test:coverage
-
-# Цели покрытия:
-# - Statements: 80%
-# - Branches: 75%
-# - Functions: 80%
-# - Lines: 80%
 ```
 
 ---
 
-## 🎭 E2E Testing with Playwright
+## 🎭 E2E ТЕСТЫ
 
-### Структура E2E тестов
+### Архитектура E2E тестов
 
 ```
 e2e/
-├── critical/
-│   ├── rating.spec.js      # @critical
-│   ├── login.spec.js        # @critical
-│   └── game-input.spec.js   # @critical
-├── smoke/
-│   ├── api-health.spec.js
-│   └── pages-load.spec.js
-└── full/
-    ├── user-journey.spec.js
-    └── admin-flow.spec.js
+├── critical/           # @critical тесты (запускаются в CI)
+│   ├── rating.spec.js     # 7 тестов
+│   ├── login.spec.js      # 6 тестов
+│   ├── game-input.spec.js # 13 тестов
+│   └── player.spec.js     # 12 тестов
+└── full/              # Полный набор тестов
+    └── (будущие тесты)
 ```
 
-### Critical Path Test Example
+### Конфигурация Playwright
 
+**playwright.config.js:**
 ```javascript
-// e2e/critical/rating.spec.js
-import { test, expect } from '@playwright/test';
-
-test.describe('Rating Page @critical', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('https://mafclubscore.vercel.app/rating.html');
-  });
-
-  test('should load and display rating table', async ({ page }) => {
-    // Wait for data to load
-    await page.waitForSelector('.rating-table', { timeout: 5000 });
-
-    // Check table has data
-    const rows = await page.$$('.rating-table tbody tr');
-    expect(rows.length).toBeGreaterThan(0);
-
-    // Check first player has name
-    const firstPlayer = await page.textContent('.rating-table tbody tr:first-child .player-name');
-    expect(firstPlayer).toBeTruthy();
-  });
-
-  test('should navigate to player details on click', async ({ page }) => {
-    // Click first player
-    await page.click('.rating-table tbody tr:first-child');
-
-    // Should navigate to player page
-    await page.waitForURL(/player\.html\?id=/);
-
-    // Player stats should load
-    await page.waitForSelector('.player-stats');
-  });
-
-  test('should sort by different columns', async ({ page }) => {
-    // Click on "Games" column to sort
-    await page.click('th.sortable:has-text("Игр")');
-
-    // Get values
-    const games = await page.$$eval('.games-count',
-      elements => elements.map(el => parseInt(el.textContent))
-    );
-
-    // Check descending order
-    for (let i = 0; i < games.length - 1; i++) {
-      expect(games[i]).toBeGreaterThanOrEqual(games[i + 1]);
+export default defineConfig({
+  testDir: './e2e',
+  timeout: 30000,
+  expect: {
+    timeout: 5000
+  },
+  use: {
+    baseURL: process.env.BASE_URL || 'https://mafclubscore.vercel.app',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'on-first-retry'
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] }
     }
-  });
+  ]
 });
 ```
 
-### Login Flow Test
-
-```javascript
-// e2e/critical/login.spec.js
-test.describe('Login Flow @critical', () => {
-  test('should login successfully', async ({ page }) => {
-    await page.goto('https://mafclubscore.vercel.app/login.html');
-
-    // Fill credentials
-    await page.fill('#username', 'admin');
-    await page.fill('#password', 'test-password');
-
-    // Submit
-    await page.click('button[type="submit"]');
-
-    // Should redirect to game input
-    await page.waitForURL(/game-input\.html/);
-
-    // Check localStorage
-    const isLoggedIn = await page.evaluate(() => {
-      return localStorage.getItem('maf_is_logged_in') === 'true';
-    });
-    expect(isLoggedIn).toBe(true);
-  });
-
-  test('should show error on invalid credentials', async ({ page }) => {
-    await page.goto('https://mafclubscore.vercel.app/login.html');
-
-    await page.fill('#username', 'invalid');
-    await page.fill('#password', 'wrong');
-    await page.click('button[type="submit"]');
-
-    // Error should be visible
-    await page.waitForSelector('.error-message.show');
-    const error = await page.textContent('.error-message');
-    expect(error).toContain('Неверный логин или пароль');
-  });
-});
-```
-
-### API Health Checks
-
-```javascript
-// e2e/smoke/api-health.spec.js
-test.describe('API Health Checks', () => {
-  const BASE_URL = 'https://mafclubscore.vercel.app';
-
-  test('GET /api/version', async ({ request }) => {
-    const response = await request.get(`${BASE_URL}/api/version`);
-    expect(response.ok()).toBeTruthy();
-
-    const data = await response.json();
-    expect(data.version).toMatch(/^v\d+\.\d+\.\d+$/);
-  });
-
-  test('GET /api/rating', async ({ request }) => {
-    const response = await request.get(`${BASE_URL}/api/rating`);
-    expect(response.ok()).toBeTruthy();
-
-    const data = await response.json();
-    expect(data.success).toBe(true);
-    expect(Array.isArray(data.players)).toBe(true);
-  });
-
-  test('CORS headers', async ({ request }) => {
-    const response = await request.get(`${BASE_URL}/api/rating`, {
-      headers: { 'Origin': 'https://mafclubscore.vercel.app' }
-    });
-
-    const headers = response.headers();
-    expect(headers['access-control-allow-origin']).toBe('https://mafclubscore.vercel.app');
-  });
-});
-```
-
----
-
-## 🔍 Integration Testing
-
-### Database Integration
-
-```javascript
-// __tests__/integration/database.test.js
-import { getDB, select, insert } from '../../shared/database.js';
-
-describe('Database Integration', () => {
-  let db;
-
-  beforeAll(() => {
-    db = getDB();
-  });
-
-  afterAll(async () => {
-    await db.close();
-  });
-
-  test('should connect to database', () => {
-    expect(db).toBeDefined();
-  });
-
-  test('should fetch players', async () => {
-    const players = await select('players', {
-      orderBy: 'name ASC',
-      limit: 10
-    });
-
-    expect(Array.isArray(players)).toBe(true);
-    if (players.length > 0) {
-      expect(players[0]).toHaveProperty('id');
-      expect(players[0]).toHaveProperty('name');
-    }
-  });
-});
-```
-
----
-
-## 🚦 Pre-commit Testing
-
-### Setup Husky
+### Запуск E2E тестов
 
 ```bash
-# Install husky
-npm install --save-dev husky
+# Критические тесты (быстро)
+npm run test:e2e:critical
 
-# Initialize
-npx husky-init
+# Все E2E тесты
+npm run test:e2e
 
-# Add pre-commit hook
-npx husky add .husky/pre-commit "npm run test:pre-commit"
-```
-
-### Pre-commit Script
-
-```json
-// package.json
-{
-  "scripts": {
-    "test:pre-commit": "npm run lint && npm test -- --onlyChanged && npm run test:e2e:critical"
-  }
-}
-```
-
----
-
-## 📈 Performance Testing
-
-### Lighthouse CI
-
-```bash
-# Install
-npm install -g @lhci/cli
-
-# Run audit
-lhci autorun --collect.url=https://mafclubscore.vercel.app
-
-# With budget
-lhci autorun --budget.preset=lighthouse:recommended
-```
-
-### API Response Time
-
-```javascript
-// __tests__/performance/api-speed.test.js
-describe('API Performance', () => {
-  test('rating endpoint < 500ms', async () => {
-    const start = Date.now();
-    const response = await fetch('https://mafclubscore.vercel.app/api/rating');
-    const end = Date.now();
-
-    expect(response.ok).toBe(true);
-    expect(end - start).toBeLessThan(500);
-  });
-});
-```
-
----
-
-## 🎪 Manual Testing Checklist
-
-### Staging Testing (24-48h)
-
-```markdown
-## Functional Testing
-- [ ] Главная страница загружается
-- [ ] Рейтинг отображается
-- [ ] Клик на игрока работает
-- [ ] Авторизация работает
-- [ ] Ввод игры работает
-- [ ] Статистика по дням работает
-
-## Cross-browser Testing
-- [ ] Chrome
-- [ ] Firefox
-- [ ] Safari
-- [ ] Mobile Chrome
-- [ ] Mobile Safari
-
-## Security Testing
-- [ ] XSS: попробовать <script>alert(1)</script> в полях
-- [ ] CORS: проверить с другого домена
-- [ ] Auth: проверить без токена
-
-## Performance Testing
-- [ ] Страницы загружаются < 3 сек
-- [ ] API отвечает < 1 сек
-- [ ] Нет memory leaks
-
-## Error Handling
-- [ ] 404 страница работает
-- [ ] API errors показывают понятные сообщения
-- [ ] Network errors обрабатываются
-```
-
----
-
-## 🐛 Debugging Tests
-
-### Debug Unit Tests
-
-```bash
-# Run specific test file
-npm test -- rating.test.js
-
-# Run with verbose output
-npm test -- --verbose
-
-# Debug mode
-node --inspect-brk ./node_modules/.bin/jest --runInBand
-
-# Watch mode
-npm test -- --watch
-```
-
-### Debug E2E Tests
-
-```bash
-# Run with UI
+# С UI (интерактивно)
 npm run test:e2e:ui
 
+# С браузером (headed mode)
+npm run test:e2e:headed
+
 # Debug mode
-PWDEBUG=1 npm run test:e2e
+npm run test:e2e:debug
+```
 
-# Headed mode (see browser)
-npm run test:e2e -- --headed
+### Структура E2E теста
 
-# Slow motion
-npm run test:e2e -- --headed --slow-mo=1000
+**e2e/critical/example.spec.js:**
+```javascript
+import { test, expect } from '@playwright/test';
 
-# Single test
-npm run test:e2e -- rating.spec.js
+const BASE_URL = process.env.BASE_URL || 'https://mafclubscore.vercel.app';
+
+test.describe('Feature Name @critical', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${BASE_URL}/page.html`);
+  });
+
+  test('should do something', async ({ page }) => {
+    // Arrange
+    const element = page.locator('.my-element');
+
+    // Act
+    await element.click();
+
+    // Assert
+    await expect(element).toBeVisible();
+  });
+});
 ```
 
 ---
 
-## 📊 Test Reports
+## 🚀 ЗАПУСК ТЕСТОВ
 
-### Jest Coverage Report
+### Локально
 
 ```bash
-# Generate HTML report
-npm run test:coverage
+# 1. Установить зависимости
+npm install
 
-# Open report
-open coverage/lcov-report/index.html
+# 2. Установить браузеры Playwright
+npx playwright install
+
+# 3. Запустить тесты
+npm test                    # Unit тесты
+npm run test:e2e:critical  # E2E тесты
+npm run test:all           # Все тесты
 ```
 
-### Playwright Report
+### В CI/CD
+
+Автоматически запускаются:
+- **На push в main/develop** → E2E тесты
+- **На Pull Request** → Unit + E2E тесты
+- **Pre-commit hook** → Syntax check
+
+---
+
+## ✍️ НАПИСАНИЕ ТЕСТОВ
+
+### Unit тесты
+
+#### 1. Создать файл теста
 
 ```bash
-# After test run
-npx playwright show-report
+# Рядом с тестируемым файлом или в __tests__/
+touch js/__tests__/my-module.test.js
+```
 
-# Or configure in playwright.config.js
-reporter: [['html', { open: 'never' }]]
+#### 2. Написать тест
+
+```javascript
+import { describe, it, expect, beforeEach } from '@jest/globals';
+import { myFunction } from '../my-module.js';
+
+describe('myFunction', () => {
+  let testData;
+
+  beforeEach(() => {
+    testData = { foo: 'bar' };
+  });
+
+  it('should return correct result', () => {
+    const result = myFunction(testData);
+    expect(result).toBe('expected');
+  });
+
+  it('should handle edge cases', () => {
+    expect(myFunction(null)).toBeNull();
+    expect(myFunction(undefined)).toBeUndefined();
+  });
+});
+```
+
+#### 3. Запустить
+
+```bash
+npm test my-module.test.js
 ```
 
 ---
 
-## ✅ Testing Best Practices
+### E2E тесты
 
-### DO's
-- ✅ Test user behavior, not implementation
-- ✅ Keep tests simple and readable
-- ✅ Use descriptive test names
-- ✅ Clean up after tests (reset state)
-- ✅ Mock external dependencies
-- ✅ Test edge cases
-- ✅ Run tests in CI/CD
+#### 1. Создать файл спецификации
 
-### DON'Ts
-- ❌ Don't test third-party libraries
-- ❌ Don't write fragile selectors
-- ❌ Don't skip error scenarios
-- ❌ Don't ignore flaky tests
-- ❌ Don't test console.log outputs
-- ❌ Don't hardcode test data
+```bash
+touch e2e/critical/my-feature.spec.js
+```
+
+#### 2. Написать тест
+
+```javascript
+import { test, expect } from '@playwright/test';
+
+const BASE_URL = process.env.BASE_URL || 'https://mafclubscore.vercel.app';
+
+test.describe('My Feature @critical', () => {
+  test.beforeEach(async ({ page }) => {
+    // Setup: открыть страницу
+    await page.goto(`${BASE_URL}/my-page.html`);
+  });
+
+  test('should load page correctly', async ({ page }) => {
+    // Проверка загрузки
+    await page.waitForSelector('.main-content', { timeout: 10000 });
+    await expect(page.locator('h1')).toBeVisible();
+  });
+
+  test('should handle user interaction', async ({ page }) => {
+    // Клик
+    await page.click('button#submit');
+
+    // Ждать результата
+    await page.waitForSelector('.result');
+
+    // Проверка
+    const result = await page.textContent('.result');
+    expect(result).toContain('Success');
+  });
+
+  test('should handle errors gracefully', async ({ page }) => {
+    // Вызвать ошибку
+    await page.fill('#input', 'invalid-data');
+    await page.click('button#submit');
+
+    // Проверить сообщение об ошибке
+    const error = page.locator('.error-message');
+    await expect(error).toBeVisible();
+  });
+});
+```
+
+#### 3. Запустить
+
+```bash
+npm run test:e2e:critical -- my-feature.spec.js
+```
 
 ---
 
-## 🔄 Continuous Testing
+## 🔗 CI/CD ИНТЕГРАЦИЯ
 
-### GitHub Actions
+### GitHub Actions Workflows
 
+#### e2e-tests.yml
 ```yaml
-# .github/workflows/test.yml
-name: Tests
+name: E2E Tests
 
 on:
   push:
-    branches: [develop, staging]
-  pull_request:
-    branches: [main, staging, develop]
+    branches: [ main, develop ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
+          node-version: '20'
       - run: npm ci
-      - run: npm test
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e:critical
+        env:
+          BASE_URL: https://mafclubscore.vercel.app
+```
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+### Pre-commit Hook
+
+Автоматически проверяет:
+- ✅ Синхронизация версий
+- ✅ JavaScript syntax
+- ✅ Lint-staged
+
+```bash
+# .husky/pre-commit выполняется автоматически
+git commit -m "feat: Add new feature"
 ```
 
 ---
 
-## 🎯 Testing Checklist
+## 💡 BEST PRACTICES
 
-### Before Commit
-- [ ] Unit tests pass
-- [ ] No console.log in tests
-- [ ] Coverage > 80%
+### Unit тесты
 
-### Before PR
-- [ ] All tests pass
-- [ ] E2E critical paths pass
-- [ ] No skip() or only() in tests
+1. **Один тест = одна проверка**
+   ```javascript
+   // ❌ Плохо
+   it('should work', () => {
+     expect(func1()).toBe(1);
+     expect(func2()).toBe(2);
+     expect(func3()).toBe(3);
+   });
 
-### Before Deploy
-- [ ] Full E2E suite passes
-- [ ] Performance tests pass
-- [ ] Manual testing on staging
-- [ ] Cross-browser testing done
+   // ✅ Хорошо
+   it('should return 1 for func1', () => {
+     expect(func1()).toBe(1);
+   });
+
+   it('should return 2 for func2', () => {
+     expect(func2()).toBe(2);
+   });
+   ```
+
+2. **AAA Pattern (Arrange-Act-Assert)**
+   ```javascript
+   it('should calculate total', () => {
+     // Arrange
+     const items = [1, 2, 3];
+
+     // Act
+     const result = calculateTotal(items);
+
+     // Assert
+     expect(result).toBe(6);
+   });
+   ```
+
+3. **Тестировать edge cases**
+   ```javascript
+   describe('divide', () => {
+     it('should divide numbers', () => {
+       expect(divide(10, 2)).toBe(5);
+     });
+
+     it('should handle division by zero', () => {
+       expect(() => divide(10, 0)).toThrow('Division by zero');
+     });
+
+     it('should handle negative numbers', () => {
+       expect(divide(-10, 2)).toBe(-5);
+     });
+   });
+   ```
 
 ---
 
-*Последнее обновление: 2025-11-14*
-*Следуйте этому guide для надёжного тестирования!*
+### E2E тесты
+
+1. **Использовать надёжные селекторы**
+   ```javascript
+   // ❌ Плохо (хрупкий селектор)
+   page.locator('.btn.primary.large')
+
+   // ✅ Хорошо (стабильный селектор)
+   page.locator('#submit-button')
+   page.locator('[data-testid="submit-btn"]')
+   ```
+
+2. **Ждать элементы явно**
+   ```javascript
+   // ❌ Плохо
+   await page.click('button');
+
+   // ✅ Хорошо
+   await page.waitForSelector('button', { timeout: 5000 });
+   await page.click('button');
+   ```
+
+3. **Изолировать тесты**
+   ```javascript
+   // Каждый тест должен быть независимым
+   test.beforeEach(async ({ page }) => {
+     // Сброс состояния
+     await page.goto(BASE_URL);
+   });
+   ```
+
+4. **Использовать @critical тэг**
+   ```javascript
+   // Для важных тестов, которые запускаются в CI
+   test.describe('Login @critical', () => {
+     // ...
+   });
+   ```
+
+---
+
+## 📊 COVERAGE
+
+### Генерация отчёта
+
+```bash
+# Unit test coverage
+npm run test:coverage
+
+# Открыть HTML отчёт
+open coverage/lcov-report/index.html
+```
+
+### Целевые показатели
+
+| Метрика | Текущее | Цель |
+|---------|---------|------|
+| Unit Coverage | 0% | 80% |
+| E2E Coverage | 100% | 100% |
+| Critical Paths | 100% | 100% |
+
+---
+
+## 🐛 DEBUGGING
+
+### Unit тесты
+
+```bash
+# Debug конкретный тест
+node --inspect-brk node_modules/.bin/jest --runInBand my-test.test.js
+
+# Или использовать VSCode debugger
+```
+
+### E2E тесты
+
+```bash
+# UI Mode (интерактивный)
+npm run test:e2e:ui
+
+# Debug Mode
+npm run test:e2e:debug
+
+# Headed Mode (видеть браузер)
+npm run test:e2e:headed
+```
+
+### Playwright Inspector
+
+```javascript
+// Добавить в тест
+test('debug test', async ({ page }) => {
+  await page.pause(); // Откроет Playwright Inspector
+  // ...
+});
+```
+
+---
+
+## 📝 CHECKLIST
+
+### Перед созданием теста
+
+- [ ] Понять что тестируем (unit/e2e/integration)
+- [ ] Определить критичность (@critical или нет)
+- [ ] Проверить нет ли похожего теста
+
+### После написания теста
+
+- [ ] Тест проходит локально
+- [ ] Тест изолирован (не зависит от других)
+- [ ] Тест стабилен (не flaky)
+- [ ] Добавлен в соответствующую категорию
+- [ ] Обновлён coverage
+
+---
+
+## 🔗 РЕСУРСЫ
+
+- **Jest Docs:** https://jestjs.io/docs/getting-started
+- **Playwright Docs:** https://playwright.dev/docs/intro
+- **Testing Best Practices:** https://github.com/goldbergyoni/javascript-testing-best-practices
+
+---
+
+**Версия документа:** 1.0
+**Проект:** MafClubScore v1.13.0
+**Автор:** МАФ-Клуб SHOWTIME
