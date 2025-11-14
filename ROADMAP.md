@@ -456,6 +456,160 @@ feature/* → develop → staging → main → production
 
 ---
 
+### ⚠️ ФАЗА КРИТИЧЕСКАЯ: SECURITY FIXES 🔒
+**Срок:** НЕМЕДЛЕННО | **Приоритет:** КРИТИЧЕСКИЙ
+**Добавлено:** 2025-11-14 (Code Review)
+
+#### 🔴 КРИТИЧЕСКИЕ УЯЗВИМОСТИ (исправить СЕГОДНЯ!)
+
+##### Утечка секретов
+- [ ] ⛔ Удалить .env.production.local из git истории
+  - [ ] `git rm --cached .env.production.local`
+  - [ ] Добавить в .gitignore: `.env.production.local`
+  - [ ] Сменить все токены на Vercel
+  - [ ] Файл содержит VERCEL_OIDC_TOKEN
+
+- [ ] ⛔ Убрать hardcoded fallback secrets
+  - [ ] `api/auth/login.js:42` - JWT_SECRET fallback 'temporary-secret-key'
+  - [ ] `shared/middleware/auth.js:31,56` - ADMIN_AUTH_TOKEN fallback 'egor_admin'
+  - [ ] `api/games/[id].js:20` - проверить JWT_SECRET
+  - [ ] Throw error если env variables отсутствуют
+
+##### XSS уязвимости
+- [ ] 🔴 Исправить innerHTML без экранирования
+  - [ ] `game-details.html:584` - innerHTML с user data
+  - [ ] `player.html:493` - innerHTML с player.name
+  - [ ] `day-stats.html:393` - innerHTML с данными
+  - [ ] `mafia-rating.html:339,399` - playerCard.innerHTML
+  - [ ] Использовать escapeHtml() из dom-safe.js или textContent
+
+##### SQL Injection
+- [ ] 🔴 Добавить валидацию SQL параметров
+  - [ ] `shared/database.js:106` - table name не валидируется
+  - [ ] `shared/database.js:122` - orderBy не валидируется
+  - [ ] Создать whitelist VALID_TABLES и VALID_COLUMNS
+  - [ ] Валидировать orderBy через regex
+
+#### 🟡 ВЫСОКИЙ ПРИОРИТЕТ (1-2 недели)
+
+##### Безопасность
+- [ ] Исправить CORS misconfiguration
+  - [ ] `shared/middleware/cors.js:33-36` - разрешает ANY .vercel.app
+  - [ ] Использовать strict pattern: `/^https:\/\/mafclubscore.*\.vercel\.app$/`
+
+- [ ] Убрать утечку деталей ошибок
+  - [ ] `shared/handlers.js:15-21` - возвращает error.message в production
+  - [ ] Показывать details только в development
+
+- [ ] Добавить валидацию входных данных
+  - [ ] `api/games/[id].js:15` - gameId должен быть числом
+  - [ ] `api/players/[id].js:14` - playerId должен быть числом
+  - [ ] Все ID параметры через parseInt с проверкой
+
+- [ ] Добавить CSRF protection
+  - [ ] Создать shared/middleware/csrf.js
+  - [ ] X-CSRF-Token header для POST/DELETE
+  - [ ] Токен в session
+
+##### Тестирование
+- [ ] 📝 Добавить тесты для критических модулей (сейчас 0% coverage!)
+  - [ ] `api/auth/login.js` - тесты авторизации
+  - [ ] `shared/middleware/auth.js` - тесты JWT
+  - [ ] `shared/database.js` - тесты БД операций
+  - [ ] `api/rating.js` - тесты рейтинга
+
+#### 🟢 СРЕДНИЙ ПРИОРИТЕТ (1 месяц)
+
+##### Производительность
+- [ ] Оптимизировать N+1 queries
+  - [ ] `api/players/[id].js:19-31` - 4 подзапроса вместо JOIN
+  - [ ] Переписать на один JOIN с GROUP BY
+
+- [ ] Добавить кэширование
+  - [ ] `api/rating.js` - кэш на 1 минуту
+  - [ ] `api/day-stats.js` - кэш на 1 минуту
+  - [ ] Создать shared/request-cache.js
+
+- [ ] Distributed Rate Limiting
+  - [ ] `shared/rate-limiter.js:14` - in-memory Map не работает в serverless
+  - [ ] Использовать Redis или Vercel KV
+
+##### Качество кода
+- [ ] Убрать дублирование кода
+  - [ ] `shared/middleware/auth.js:12-17` дублирует getDB() из database.js
+  - [ ] Использовать единый getDB()
+
+- [ ] Убрать console.log из production
+  - [ ] `shared/database.js:27,39` - логирует connection
+  - [ ] `js/modules/auth.js:91` - логирует username!
+  - [ ] Создать proper logger с уровнями
+
+- [ ] Добавить проверки на null/undefined
+  - [ ] `api/players/[id].js:60` - rows[0] может быть undefined
+  - [ ] Проверять все .rows[0] перед использованием
+
+- [ ] Удалить неиспользуемый код
+  - [ ] `shared/security-headers.js` - 398 строк, много не используется
+  - [ ] validateSecurityHeaders(), getSecurityRecommendations(), withCSPNonce()
+
+- [ ] Вынести magic numbers в константы
+  - [ ] `rate-limiter.js:30` - maxRequests: 100
+  - [ ] `game-validator.js:41` - 10 игроков
+  - [ ] Создать config/constants.js
+
+##### Безопасность (продолжение)
+- [ ] Добавить missing security headers
+  - [ ] vercel.json - добавить Strict-Transport-Security
+  - [ ] Content-Security-Policy
+  - [ ] Permissions-Policy
+
+- [ ] Добавить DOMPurify
+  - [ ] Заменить custom escapeHtml() на DOMPurify
+  - [ ] npm install dompurify
+
+#### 📋 НИЗКИЙ ПРИОРИТЕТ (Backlog)
+
+##### Документация
+- [ ] Создать OpenAPI/Swagger спецификацию
+- [ ] Добавить ER diagram базы данных
+- [ ] Security checklist для contributors
+- [ ] Обновить API.md (может быть outdated)
+
+##### Инфраструктура
+- [ ] E2E тесты для критических flows
+  - [ ] Login → Create Game → Calculate Rating
+  - [ ] Player Stats flow
+  - [ ] Day Stats flow
+
+- [ ] Structured logging
+  - [ ] Заменить console.log на winston/pino
+  - [ ] Log levels: debug, info, warn, error
+  - [ ] Не логировать sensitive data
+
+##### Архитектура
+- [ ] Consistent error handling
+  - [ ] Везде использовать shared/handlers.js
+  - [ ] Не смешивать разные подходы
+
+#### 📊 МЕТРИКИ БЕЗОПАСНОСТИ
+
+**Текущий Security Score: 5.5/10**
+
+- Authentication: 6/10 (JWT хорош, но fallback secrets -4)
+- Authorization: 7/10 (role-based, но нет RBAC детализации)
+- Input Validation: 4/10 (Zod для игр, но остальное слабо)
+- Output Encoding: 3/10 (innerHTML без экранирования)
+- Cryptography: 7/10 (bcrypt, JWT, но weak secrets)
+- Error Handling: 5/10 (утечка деталей в prod)
+- Logging: 4/10 (console.log с чувствительными данными)
+- HTTPS: 8/10 (Vercel enforces HTTPS)
+- Security Headers: 6/10 (частично реализованы)
+- CORS: 5/10 (слишком разрешительный для .vercel.app)
+
+**Цель: поднять до 9/10 после всех исправлений**
+
+---
+
 ### ФАЗА 5: МАСШТАБИРОВАНИЕ 🚀
 **Срок:** 2 месяца | **Приоритет:** БУДУЩЕЕ
 
