@@ -232,9 +232,12 @@ feature/* → develop → staging → main → production
 - [ ] Visual regression тесты (опционально)
 
 #### 1.2 Автоматизация процессов
-- [ ] Pre-commit hooks (husky)
+- [x] Pre-commit hooks (husky) ✅ v1.13.0
+  - [x] Проверка синхронизации версий
+  - [x] Проверка синтаксиса JavaScript
+  - [x] Lint-staged для изменённых файлов
+- [x] Автоматический changelog ✅ (через bump-version.js)
 - [ ] Semantic versioning (semantic-release)
-- [ ] Автоматический changelog
 - [ ] Dependency updates (Renovate)
 
 #### 1.3 Улучшение мониторинга
@@ -244,8 +247,8 @@ feature/* → develop → staging → main → production
 - [ ] Custom alerts в Sentry
 
 #### 1.4 Документация
-- [ ] TROUBLESHOOTING.md
-- [ ] API.md с описанием endpoints
+- [x] TROUBLESHOOTING.md ✅ (создан ранее)
+- [x] API.md с описанием endpoints ✅ v1.13.0
 - [ ] DEPLOYMENT_GUIDE.md
 - [ ] TESTING_GUIDE.md
 
