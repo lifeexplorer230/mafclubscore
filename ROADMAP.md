@@ -1555,6 +1555,24 @@ gh pr create --base develop --title "Phase 1.4: Infrastructure for removing hard
 
 ## CHANGELOG
 
+
+### v1.3.0 (2025-11-14)
+**Тип**: Minor
+**Изменения**: feat: Merge JWT authentication and auto-versioning into develop
+
+
+
+### v1.2.0 (2025-11-14)
+**Тип**: Minor
+**Изменения**: feat: Merge JWT authentication and auto-versioning into develop
+
+
+
+### v1.1.0 (2025-11-14)
+**Тип**: Minor
+**Изменения**: feat: Merge JWT authentication and auto-versioning into develop
+
+
 ### v1.0.8 (2025-11-14)
 **Тип**: Patch
 **Изменения**: fix: Correct version link and add auto-versioning system
