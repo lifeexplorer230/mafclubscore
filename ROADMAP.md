@@ -226,9 +226,15 @@ feature/* → develop → staging → main → production
 **Срок:** 1 неделя | **Приоритет:** ВЫСОКИЙ
 
 #### 1.1 Улучшение тестового покрытия
-- [ ] Достичь 80% unit test coverage
-- [ ] Написать E2E для всех страниц
-- [ ] Добавить performance тесты
+- [x] Unit test coverage началось ✅ v1.14.0
+  - [x] Тесты для utils (escapeHtml, createElement, formatDate)
+  - [ ] Тесты для API модулей
+  - [ ] Достичь 80% coverage
+- [x] Написать E2E для всех страниц ✅ (38 тестов)
+- [x] Добавить performance тесты ✅ v1.14.0
+  - [x] Lighthouse CI workflow
+  - [x] Performance budget assertions
+  - [x] Автоматические PR комментарии
 - [ ] Visual regression тесты (опционально)
 
 #### 1.2 Автоматизация процессов
@@ -237,7 +243,10 @@ feature/* → develop → staging → main → production
   - [x] Проверка синтаксиса JavaScript
   - [x] Lint-staged для изменённых файлов
 - [x] Автоматический changelog ✅ (через bump-version.js)
-- [ ] Semantic versioning (semantic-release)
+- [x] Semantic versioning (semantic-release) ✅ v1.14.0
+  - [x] Автоматические releases на GitHub
+  - [x] CHANGELOG.md генерация
+  - [x] Conventional commits анализ
 - [ ] Dependency updates (Renovate)
 
 #### 1.3 Улучшение мониторинга
@@ -526,6 +535,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ---
 
 ## CHANGELOG
+
+
+### v1.13.2 (2025-11-14)
+**Тип**: Patch
+**Изменения**: docs: Mark Phase 1.1 and 1.2 tasks as completed (unit tests, performance, semantic-release)
+
 
 
 ### v1.13.1 (2025-11-14)

@@ -1,6 +1,6 @@
 {
   "name": "mafclubdemo",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "МАФ-Клуб Рейтинговая Система",
   "type": "module",
   "scripts": {
