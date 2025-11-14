@@ -15,10 +15,20 @@
 export function handleError(response, error, message = 'Internal Server Error') {
   console.error(`API Error: ${message}`, error);
 
-  return response.status(500).json({
-    error: message,
-    details: error.message
-  });
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // ✅ Security: Don't leak error details in production
+  const responseBody = {
+    error: message
+  };
+
+  // Only include error details in development mode
+  if (isDevelopment) {
+    responseBody.details = error.message;
+    responseBody.stack = error.stack;
+  }
+
+  return response.status(500).json(responseBody);
 }
 
 /**
