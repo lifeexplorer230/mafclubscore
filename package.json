@@ -22,7 +22,8 @@
   "author": "МАФ-Клуб SHOWTIME",
   "license": "MIT",
   "dependencies": {
-    "@libsql/client": "^0.14.0"
+    "@libsql/client": "^0.14.0",
+    "zod": "^4.1.12"
   },
   "engines": {
     "node": ">=18.0.0"
