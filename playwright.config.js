@@ -28,8 +28,8 @@ export default defineConfig({
 
   // Общие настройки для всех проектов
   use: {
-    // Base URL для тестов
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    // Base URL для тестов (production по умолчанию)
+    baseURL: process.env.BASE_URL || 'https://mafclubscore.vercel.app',
 
     // Скриншоты только при ошибках
     screenshot: 'only-on-failure',
@@ -39,6 +39,10 @@ export default defineConfig({
 
     // Trace при ошибках
     trace: 'on-first-retry',
+
+    // Таймауты для навигации
+    navigationTimeout: 10000,
+    actionTimeout: 5000,
   },
 
   // Конфигурация для разных браузеров
