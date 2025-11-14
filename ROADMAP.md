@@ -294,18 +294,34 @@ feature/* → develop → staging → main → production
   - [x] Performance metrics (success rate, avg response time)
   - [x] Graceful shutdown handlers
   - [x] Документация (docs/CONNECTION_POOLING.md)
-- [ ] Query optimization (explain analyze)
+- [x] Query optimization (explain analyze) ✅ v1.14.3
+  - [x] EXPLAIN QUERY PLAN analyzer (scripts/analyze-queries.js)
+  - [x] Performance benchmarking (5 iterations)
+  - [x] Index usage detection
+  - [x] N+1 query detection patterns
+  - [x] Optimization recommendations
 - [ ] Кэширование (Redis)
 
-#### 2.2 Frontend оптимизация
+#### 2.2 Frontend оптимизация ✅ ЗАВЕРШЕНО
+- [x] Service Worker для offline ✅ v1.14.3
+  - [x] Cache First strategy для static assets
+  - [x] Network First для API (TTL 5 мин)
+  - [x] Offline fallback
+  - [x] Автоматическое обновление (sw-register.js)
+  - [x] Cache statistics и мониторинг
 - [ ] Code splitting
 - [ ] Lazy loading компонентов
 - [ ] Image optimization
 - [ ] Bundle size analysis
-- [ ] Service Worker для offline
 
 #### 2.3 Backend оптимизация
-- [ ] Rate limiting
+- [x] Rate limiting ✅ v1.14.3
+  - [x] IP-based rate limiter (shared/rate-limiter.js)
+  - [x] Sliding window algorithm
+  - [x] Per-endpoint configuration
+  - [x] 429 Too Many Requests response
+  - [x] X-RateLimit headers
+  - [x] Admin stats и monitoring
 - [ ] Request caching
 - [ ] Compression (gzip/brotli)
 - [ ] CDN для статики
@@ -557,6 +573,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ---
 
 ## CHANGELOG
+
+
+### v1.13.5 (2025-11-14)
+**Тип**: Patch
+**Изменения**: docs: Update Phase 2 completion (query optimization, rate limiting, PWA)
+
 
 
 ### v1.13.4 (2025-11-14)
