@@ -808,6 +808,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v1.17.3 (2025-11-14)
+**Тип**: Patch
+**Изменения**: feat(monitoring): Add structured production logger with request/security/performance tracking
+
+
+
 ### v1.17.2 (2025-11-14)
 **Тип**: Patch
 **Изменения**: feat(performance): Add caching and rate limiting

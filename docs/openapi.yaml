@@ -1,0 +1,497 @@
+openapi: 3.0.3
+info:
+  title: MafClubScore API
+  description: |
+    Рейтинговая система для МАФ-Клуба SHOWTIME.
+
+    ## Authentication
+    - **Bearer Token**: Используется для admin endpoints (игры, удаление)
+    - **JWT**: Используется для пользовательской аутентификации
+    - **CSRF Token**: Требуется для POST/PUT/DELETE запросов
+
+    ## Rate Limiting
+    - Login: 5 requests/minute per IP
+    - Other endpoints: По умолчанию без лимитов
+
+    ## Caching
+    - Rating endpoint: 30 seconds cache
+    - Cache headers: X-Cache (HIT/MISS), X-Cache-TTL
+  version: 1.17.2
+  contact:
+    name: МАФ-Клуб SHOWTIME
+    url: https://mafclub.biz
+servers:
+  - url: https://score.mafclub.biz/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Development
+
+tags:
+  - name: Public
+    description: Публичные endpoints (без авторизации)
+  - name: Auth
+    description: Аутентификация
+  - name: Admin
+    description: Admin endpoints (требуется авторизация)
+  - name: Utility
+    description: Служебные endpoints
+
+paths:
+  /rating:
+    get:
+      tags: [Public]
+      summary: Получить рейтинг игроков
+      description: |
+        Возвращает список всех игроков с их статистикой.
+        Кешируется на 30 секунд.
+      responses:
+        '200':
+          description: Успешный ответ
+          headers:
+            X-Cache:
+              description: Cache status (HIT or MISS)
+              schema:
+                type: string
+                enum: [HIT, MISS]
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlayerRating'
+
+  /players/{id}:
+    get:
+      tags: [Public]
+      summary: Получить статистику игрока
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: ID игрока
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  player:
+                    $ref: '#/components/schemas/PlayerStats'
+                  games:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /games/{id}:
+    get:
+      tags: [Public]
+      summary: Получить детали игры
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Admin]
+      summary: Удалить игру
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Игра удалена
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /day-games:
+    get:
+      tags: [Public]
+      summary: Получить игры за определённую дату
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-01-15"
+          description: Дата в формате YYYY-MM-DD
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  games:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameWithPlayers'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /day-stats:
+    get:
+      tags: [Public]
+      summary: Получить статистику по дням
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  days:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DayStats'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Авторизация пользователя
+      description: |
+        Ограничение: 5 попыток в минуту с одного IP.
+        Возвращает JWT token в httpOnly cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: "admin"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+      responses:
+        '200':
+          description: Успешная авторизация
+          headers:
+            Set-Cookie:
+              description: JWT token (httpOnly)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /csrf:
+    get:
+      tags: [Utility]
+      summary: Получить CSRF токен
+      description: |
+        Возвращает CSRF токен для использования в POST/PUT/DELETE запросах.
+        Токен также устанавливается в httpOnly cookie.
+      responses:
+        '200':
+          description: CSRF токен
+          headers:
+            Set-Cookie:
+              description: CSRF token (httpOnly)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "abc123...xyz"
+
+  /version:
+    get:
+      tags: [Utility]
+      summary: Получить версию приложения
+      responses:
+        '200':
+          description: Версия
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    example: "v1.17.2"
+
+  /health:
+    get:
+      tags: [Utility]
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Admin auth token from environment variable
+
+  schemas:
+    PlayerRating:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        games_played:
+          type: integer
+        total_points:
+          type: integer
+        wins:
+          type: integer
+      example:
+        id: 1
+        name: "Игрок1"
+        games_played: 15
+        total_points: 45
+        wins: 8
+
+    PlayerStats:
+      allOf:
+        - $ref: '#/components/schemas/PlayerRating'
+
+    GameResult:
+      type: object
+      properties:
+        game_id:
+          type: integer
+        game_number:
+          type: integer
+        date:
+          type: string
+          format: date
+        role:
+          type: string
+          enum: [Мирный, Мафия, Дон, Шериф]
+        winner:
+          type: string
+          enum: [Мирные, Мафия]
+        points:
+          type: integer
+        death_time:
+          type: string
+          nullable: true
+        achievements:
+          type: array
+          items:
+            type: string
+
+    GameDetails:
+      type: object
+      properties:
+        game:
+          type: object
+          properties:
+            id:
+              type: integer
+            game_number:
+              type: integer
+            winner:
+              type: string
+            date:
+              type: string
+              format: date
+            is_clean_win:
+              type: boolean
+            is_dry_win:
+              type: boolean
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: integer
+              player_name:
+                type: string
+              role:
+                type: string
+              points:
+                type: integer
+              death_time:
+                type: string
+                nullable: true
+              achievements:
+                type: array
+                items:
+                  type: string
+
+    GameWithPlayers:
+      type: object
+      properties:
+        game:
+          type: object
+        players:
+          type: array
+
+    DayStats:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        total_games:
+          type: integer
+        total_players:
+          type: integer
+        top_players:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              avg_points:
+                type: number
+              total_points:
+                type: integer
+              games_played:
+                type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, user]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid Player ID: must be a positive integer"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Player not found"
+
+    TooManyRequests:
+      description: Превышен лимит запросов
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: string
+            format: date-time
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+              retryAfter:
+                type: integer
+          example:
+            error: "Too many requests"
+            message: "Rate limit exceeded. Try again in 45 seconds."
+            retryAfter: 45
