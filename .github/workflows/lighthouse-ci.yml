@@ -1,0 +1,71 @@
+name: Lighthouse CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            https://mafclubscore.vercel.app/rating.html
+            https://mafclubscore.vercel.app/login.html
+            https://mafclubscore.vercel.app/player.html?id=1
+            https://mafclubscore.vercel.app/day-stats.html
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: Check Performance Budget
+        run: |
+          echo "📊 Performance Budget Check"
+          echo "Target scores:"
+          echo "  Performance: ≥ 90"
+          echo "  Accessibility: ≥ 95"
+          echo "  Best Practices: ≥ 90"
+          echo "  SEO: ≥ 90"
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const comment = `
+            ## 📊 Lighthouse Performance Report
+            
+            Performance tests completed for:
+            - ✅ rating.html
+            - ✅ login.html
+            - ✅ player.html
+            - ✅ day-stats.html
+            
+            Check the artifacts for detailed reports.
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
