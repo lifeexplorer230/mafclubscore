@@ -1,0 +1,119 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    name: Test Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage/
+            coverage/lcov.info
+            coverage/coverage-summary.json
+          retention-days: 30
+
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          COVERAGE=$(node -p "
+            const fs = require('fs');
+            try {
+              const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              const pct = summary.total.lines.pct;
+              pct.toFixed(2);
+            } catch {
+              '0.00';
+            }
+          ")
+          echo "Coverage: ${COVERAGE}%"
+          echo "COVERAGE_PCT=${COVERAGE}" >> $GITHUB_ENV
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let coverageText = 'Coverage report not available';
+
+            try {
+              const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              const total = summary.total;
+
+              coverageText = `## 📊 Code Coverage Report
+
+              | Metric | Coverage | Status |
+              |--------|----------|--------|
+              | Lines | ${total.lines.pct.toFixed(2)}% | ${total.lines.pct >= 60 ? '✅' : '⚠️'} |
+              | Statements | ${total.statements.pct.toFixed(2)}% | ${total.statements.pct >= 60 ? '✅' : '⚠️'} |
+              | Functions | ${total.functions.pct.toFixed(2)}% | ${total.functions.pct >= 50 ? '✅' : '⚠️'} |
+              | Branches | ${total.branches.pct.toFixed(2)}% | ${total.branches.pct >= 50 ? '✅' : '⚠️'} |
+
+              **Thresholds:** Lines/Statements ≥ 60%, Functions/Branches ≥ 50%
+              `;
+            } catch (error) {
+              console.error('Error reading coverage summary:', error);
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: coverageText
+            });
+
+      - name: Check coverage thresholds
+        run: |
+          echo "Checking if coverage meets thresholds..."
+          node -e "
+            const fs = require('fs');
+            try {
+              const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+              const { lines, statements, functions, branches } = summary.total;
+
+              const failures = [];
+              if (lines.pct < 60) failures.push(\`Lines: \${lines.pct.toFixed(2)}% < 60%\`);
+              if (statements.pct < 60) failures.push(\`Statements: \${statements.pct.toFixed(2)}% < 60%\`);
+              if (functions.pct < 50) failures.push(\`Functions: \${functions.pct.toFixed(2)}% < 50%\`);
+              if (branches.pct < 50) failures.push(\`Branches: \${branches.pct.toFixed(2)}% < 50%\`);
+
+              if (failures.length > 0) {
+                console.log('❌ Coverage thresholds not met:');
+                failures.forEach(f => console.log('  - ' + f));
+                process.exit(1);
+              }
+
+              console.log('✅ All coverage thresholds met!');
+            } catch (error) {
+              console.error('Error checking coverage:', error.message);
+              process.exit(1);
+            }
+          "
