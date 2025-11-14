@@ -39,7 +39,11 @@ export default async function handler(request, response) {
     }
 
     // Generate JWT
-    const JWT_SECRET = process.env.JWT_SECRET || 'temporary-secret-key';
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      console.error('⛔ CRITICAL: JWT_SECRET environment variable is not set!');
+      return handleError(response, new Error('Server configuration error'), 'Authentication service unavailable');
+    }
     const token = jwt.sign(
       {
         userId: user.id,

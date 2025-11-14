@@ -28,7 +28,14 @@ export async function requireAuth(request, response, next) {
   try {
     // 1️⃣ Проверяем старый Bearer token (всегда работает)
     const authHeader = request.headers.authorization;
-    const expectedToken = `Bearer ${process.env.ADMIN_AUTH_TOKEN || 'egor_admin'}`;
+    const ADMIN_AUTH_TOKEN = process.env.ADMIN_AUTH_TOKEN;
+
+    if (!ADMIN_AUTH_TOKEN) {
+      console.error('⛔ CRITICAL: ADMIN_AUTH_TOKEN environment variable is not set!');
+      return unauthorized(response, 'Authentication service misconfigured');
+    }
+
+    const expectedToken = `Bearer ${ADMIN_AUTH_TOKEN}`;
 
     if (authHeader === expectedToken) {
       // Старая система авторизации - разрешаем
@@ -53,7 +60,12 @@ export async function requireAuth(request, response, next) {
       }
 
       // Верифицируем JWT
-      const JWT_SECRET = process.env.JWT_SECRET || 'temporary-secret-key';
+      const JWT_SECRET = process.env.JWT_SECRET;
+
+      if (!JWT_SECRET) {
+        console.error('⛔ CRITICAL: JWT_SECRET environment variable is not set!');
+        return unauthorized(response, 'Authentication service misconfigured');
+      }
 
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
