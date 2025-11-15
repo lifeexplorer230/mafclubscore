@@ -37,6 +37,7 @@ export function validateIds(ids, fieldName = 'IDs') {
 
 /**
  * Валидирует дату в формате YYYY-MM-DD
+ * Проверяет что дата реально существует (нет Feb 30, etc.)
  * @param {string} date - Дата для валидации
  * @returns {string} Валидная дата
  * @throws {Error} Если дата невалидна
@@ -51,10 +52,34 @@ export function validateDate(date) {
     throw new Error('Invalid date format: must be YYYY-MM-DD');
   }
 
-  // Проверка что дата валидна
-  const dateObj = new Date(date + 'T00:00:00');
-  if (isNaN(dateObj.getTime())) {
-    throw new Error('Invalid date value');
+  // Parse components
+  const [yearStr, monthStr, dayStr] = date.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+
+  // Validate ranges
+  if (year < 1900 || year > 2100) {
+    throw new Error('Invalid date value: year must be between 1900 and 2100');
+  }
+
+  if (month < 1 || month > 12) {
+    throw new Error('Invalid date value: month must be between 1 and 12');
+  }
+
+  if (day < 1 || day > 31) {
+    throw new Error('Invalid date value: day must be between 1 and 31');
+  }
+
+  // Create date object (month is 0-indexed in JS)
+  const dateObj = new Date(year, month - 1, day);
+
+  // Check if date components match after parsing
+  // This catches invalid dates like Feb 30
+  if (dateObj.getFullYear() !== year ||
+      dateObj.getMonth() !== month - 1 ||
+      dateObj.getDate() !== day) {
+    throw new Error(`Invalid date value: ${date} does not exist`);
   }
 
   return date;
@@ -108,6 +133,11 @@ export function validateNumber(num, options = {}) {
     max = Infinity,
     fieldName = 'Number'
   } = options;
+
+  // Check for null/undefined explicitly
+  if (num === null || num === undefined) {
+    throw new Error(`Invalid ${fieldName}: must be a number, got ${num}`);
+  }
 
   const numericValue = Number(num);
 

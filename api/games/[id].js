@@ -5,6 +5,7 @@
  * Security: Input validation for game ID
  */
 
+import crypto from 'crypto';
 import { getDB } from '../../shared/database.js';
 import { handleError, sendNotFound, sendSuccess, sendUnauthorized, sendBadRequest, parseAchievements } from '../../shared/handlers.js';
 import { corsMiddleware } from '../../shared/middleware/cors.js';
@@ -26,16 +27,35 @@ export default async function handler(request, response) {
 
   // Handle DELETE
   if (request.method === 'DELETE') {
-    const authHeader = request.headers.authorization;
-    const expectedToken = `Bearer ${process.env.ADMIN_AUTH_TOKEN || 'egor_admin'}`;
+    // Get admin token from environment
+    const adminToken = process.env.ADMIN_AUTH_TOKEN;
 
-    if (!authHeader || authHeader !== expectedToken) {
+    if (!adminToken) {
+      console.error('⛔ CRITICAL: ADMIN_AUTH_TOKEN not configured');
+      return response.status(503).json({
+        error: 'Service temporarily unavailable'
+      });
+    }
+
+    const authHeader = request.headers.authorization;
+    const expectedToken = `Bearer ${adminToken}`;
+
+    // Use timing-safe comparison to prevent timing attacks
+    const isValidToken = authHeader &&
+      authHeader.length === expectedToken.length &&
+      crypto.timingSafeEqual(
+        Buffer.from(authHeader),
+        Buffer.from(expectedToken)
+      );
+
+    if (!isValidToken) {
       return sendUnauthorized(response);
     }
 
     try {
       const db = getDB();
 
+      // Check if game exists
       const gameQuery = await db.execute({
         sql: 'SELECT * FROM games WHERE id = ?',
         args: [gameId]
@@ -47,21 +67,28 @@ export default async function handler(request, response) {
 
       const deletedGameNumber = gameQuery.rows[0].game_number;
 
-      await db.execute({
-        sql: 'DELETE FROM game_results WHERE game_id = ?',
-        args: [gameId]
-      });
+      // Use batch/transaction for atomic deletion
+      // This ensures both deletes succeed or both fail
+      await db.batch([
+        {
+          sql: 'DELETE FROM game_results WHERE game_id = ?',
+          args: [gameId]
+        },
+        {
+          sql: 'DELETE FROM games WHERE id = ?',
+          args: [gameId]
+        }
+      ]);
 
-      await db.execute({
-        sql: 'DELETE FROM games WHERE id = ?',
-        args: [gameId]
-      });
+      // Log the deletion for audit
+      console.log(`Game ${deletedGameNumber} (ID: ${gameId}) deleted by admin`);
 
       return sendSuccess(response, {
         message: 'Game deleted successfully',
         deleted_game_number: deletedGameNumber
       });
     } catch (error) {
+      console.error('Failed to delete game:', error);
       return handleError(response, error, 'Delete Game API Error');
     }
   }

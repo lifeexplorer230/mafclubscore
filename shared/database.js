@@ -16,8 +16,21 @@ const ALLOWED_TABLES = new Set([
   'players',
   'games',
   'game_results',
+  'game_sessions',
   'users'
 ]);
+
+/**
+ * Список разрешённых колонок для каждой таблицы
+ * SQL injection protection: strict column whitelist per table
+ */
+const ALLOWED_COLUMNS = {
+  players: ['id', 'name'],
+  games: ['id', 'session_id', 'game_number', 'winner', 'date'],
+  game_results: ['id', 'game_id', 'player_id', 'role', 'achievements', 'points', 'death_time'],
+  game_sessions: ['id', 'date'],
+  users: ['id', 'username', 'password_hash', 'role']
+};
 
 /**
  * Валидирует имя таблицы
@@ -31,25 +44,54 @@ function validateTableName(table) {
 }
 
 /**
- * Валидирует имя колонки (alphanumeric + underscore)
+ * Валидирует имя колонки для конкретной таблицы
+ * @param {string} table - Имя таблицы
  * @param {string} column - Имя колонки
- * @throws {Error} Если имя содержит недопустимые символы
+ * @throws {Error} Если колонка не разрешена для этой таблицы
  */
-function validateColumnName(column) {
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(column)) {
-    throw new Error(`Invalid column name: ${column}. Only alphanumeric and underscore allowed.`);
+function validateColumnName(table, column) {
+  validateTableName(table);
+
+  const allowedColumns = ALLOWED_COLUMNS[table];
+  if (!allowedColumns || !allowedColumns.includes(column)) {
+    throw new Error(
+      `Invalid column '${column}' for table '${table}'. ` +
+      `Allowed columns: ${allowedColumns ? allowedColumns.join(', ') : 'none'}`
+    );
   }
 }
 
 /**
- * Валидирует ORDER BY выражение
- * @param {string} orderBy - ORDER BY выражение (например: "name ASC" или "id DESC")
- * @throws {Error} Если выражение содержит недопустимые символы
+ * Валидирует ORDER BY выражение для конкретной таблицы
+ * @param {string} table - Имя таблицы
+ * @param {string} orderBy - ORDER BY выражение
+ * @throws {Error} Если выражение содержит недопустимые колонки
  */
-function validateOrderBy(orderBy) {
-  // Разрешаем: column_name ASC/DESC, column_name1 ASC, column_name2 DESC
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*(\s+(ASC|DESC))?(\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*(\s+(ASC|DESC))?)*$/i.test(orderBy)) {
-    throw new Error(`Invalid ORDER BY expression: ${orderBy}. Format: "column ASC" or "col1 DESC, col2 ASC"`);
+function validateOrderBy(table, orderBy) {
+  validateTableName(table);
+
+  const allowedColumns = ALLOWED_COLUMNS[table];
+
+  // Парсим ORDER BY выражение
+  // Формат: "column1 ASC, column2 DESC"
+  const parts = orderBy.split(',').map(p => p.trim());
+
+  for (const part of parts) {
+    // Извлекаем имя колонки (первое слово)
+    const column = part.split(/\s+/)[0];
+
+    if (!allowedColumns.includes(column)) {
+      throw new Error(
+        `Invalid column '${column}' in ORDER BY for table '${table}'. ` +
+        `Allowed columns: ${allowedColumns.join(', ')}`
+      );
+    }
+
+    // Проверяем направление сортировки
+    const direction = part.split(/\s+/)[1];
+    if (direction && !['ASC', 'DESC'].includes(direction.toUpperCase())) {
+      throw new Error(`Invalid sort direction: ${direction}. Use ASC or DESC`);
+    }
   }
 }
 
@@ -151,7 +193,7 @@ export async function select(table, options = {}) {
 
   // ✅ SQL Injection Protection: Validate column names
   if (columns[0] !== '*') {
-    columns.forEach(col => validateColumnName(col));
+    columns.forEach(col => validateColumnName(table, col));
   }
 
   // Формируем SELECT часть
@@ -164,7 +206,7 @@ export async function select(table, options = {}) {
 
   if (whereKeys.length > 0) {
     // ✅ SQL Injection Protection: Validate WHERE column names
-    whereKeys.forEach(key => validateColumnName(key));
+    whereKeys.forEach(key => validateColumnName(table, key));
 
     const whereConditions = whereKeys.map(key => {
       args.push(where[key]);
@@ -176,7 +218,7 @@ export async function select(table, options = {}) {
   // ORDER BY
   if (orderBy) {
     // ✅ SQL Injection Protection: Validate ORDER BY expression
-    validateOrderBy(orderBy);
+    validateOrderBy(table, orderBy);
     sql += ` ORDER BY ${orderBy}`;
   }
 
@@ -207,7 +249,7 @@ export async function insert(table, data) {
   const values = Object.values(data);
 
   // ✅ SQL Injection Protection: Validate column names
-  columns.forEach(col => validateColumnName(col));
+  columns.forEach(col => validateColumnName(table, col));
 
   const placeholders = columns.map(() => '?').join(', ');
   const columnsStr = columns.join(', ');
@@ -241,10 +283,10 @@ export async function update(table, data, where = {}) {
   }
 
   // ✅ SQL Injection Protection: Validate column names in SET
-  dataKeys.forEach(key => validateColumnName(key));
+  dataKeys.forEach(key => validateColumnName(table, key));
 
   // ✅ SQL Injection Protection: Validate column names in WHERE
-  whereKeys.forEach(key => validateColumnName(key));
+  whereKeys.forEach(key => validateColumnName(table, key));
 
   // SET часть
   const setConditions = dataKeys.map(key => `${key} = ?`);
@@ -279,7 +321,7 @@ export async function deleteFrom(table, where = {}) {
   }
 
   // ✅ SQL Injection Protection: Validate column names in WHERE
-  whereKeys.forEach(key => validateColumnName(key));
+  whereKeys.forEach(key => validateColumnName(table, key));
 
   const whereConditions = whereKeys.map(key => `${key} = ?`);
   const whereValues = Object.values(where);
@@ -308,7 +350,7 @@ export async function count(table, where = {}) {
 
   if (whereKeys.length > 0) {
     // ✅ SQL Injection Protection: Validate column names in WHERE
-    whereKeys.forEach(key => validateColumnName(key));
+    whereKeys.forEach(key => validateColumnName(table, key));
 
     const whereConditions = whereKeys.map(key => {
       args.push(where[key]);
@@ -355,3 +397,6 @@ export async function findOne(table, where) {
 export async function findById(table, id) {
   return findOne(table, { id });
 }
+
+// Экспортируем валидационные функции и константы для использования в других модулях
+export { validateTableName, validateColumnName, validateOrderBy, ALLOWED_TABLES, ALLOWED_COLUMNS };
