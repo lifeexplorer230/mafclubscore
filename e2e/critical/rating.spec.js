@@ -36,7 +36,8 @@ test.describe('Rating Page @critical', () => {
       elements => elements.map(el => el.textContent.trim())
     );
 
-    expect(headers).toContain('Место');
+    // "Место" может содержать эмодзи для mobile: "Место🏆"
+    expect(headers.some(h => h.includes('Место') || h === '🏆')).toBeTruthy();
     expect(headers).toContain('Игрок');
     expect(headers).toContain('Игр');
     expect(headers).toContain('Очки');

@@ -73,20 +73,24 @@ describe('escapeHtml', () => {
   });
 
   it('should prevent XSS attacks', () => {
-    const xssAttempts = [
+    const xssAttemptsWithTags = [
       '<img src=x onerror=alert(1)>',
       '<script>document.cookie</script>',
-      'javascript:alert(1)',
       '<iframe src="evil.com"></iframe>'
     ];
 
-    xssAttempts.forEach(attempt => {
+    xssAttemptsWithTags.forEach(attempt => {
       const escaped = escapeHtml(attempt);
       expect(escaped).not.toContain('<');
       expect(escaped).not.toContain('>');
       expect(escaped).toContain('&lt;');
       expect(escaped).toContain('&gt;');
     });
+
+    // javascript: protocol doesn't have < or >, just verify it's escaped properly
+    const jsProtocol = 'javascript:alert(1)';
+    const escapedJs = escapeHtml(jsProtocol);
+    expect(escapedJs).toBe('javascript:alert(1)'); // no HTML chars to escape
   });
 });
 
