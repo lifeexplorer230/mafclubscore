@@ -914,6 +914,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.2.0 (2025-11-15)
+**Тип**: Minor
+**Изменения**: feat: Add validation schemas, query optimization, and integration tests (P1, P2)
+
+
+
 ### v2.1.0 (2025-11-15)
 **Тип**: Minor
 **Изменения**: feat: Add architecture improvements from code review (P1, P2, P3)

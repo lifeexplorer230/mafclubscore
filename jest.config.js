@@ -15,7 +15,8 @@ export default {
     "**/__tests__/**/cache.test.js",
     "**/__tests__/**/rate-limit.test.js",
     "**/__tests__/modules/api.test.js",
-    "**/__tests__/modules/auth.test.js"
+    "**/__tests__/modules/auth.test.js",
+    "**/__tests__/integration/game-flow.test.js"
     // TODO: Fix and re-enable rating_calculator.test.js and api.test.js
     // These tests have import issues and need refactoring (Phase 2)
   ],
