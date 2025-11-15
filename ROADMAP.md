@@ -914,6 +914,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.1.0 (2025-11-15)
+**Тип**: Minor
+**Изменения**: feat: Add architecture improvements from code review (P1, P2, P3)
+
+
+
 ### v2.0.0 (2025-11-15)
 **Тип**: Major
 **Изменения**: fix: Apply critical security fixes from code review (P0)

@@ -1,0 +1,264 @@
+/**
+ * Game Service Layer
+ * FIX #7: Business logic separated from API endpoints
+ *
+ * Отвечает за бизнес-логику игр: расчёт очков, определение победителя, валидация правил
+ */
+
+import { ROLES, TEAMS, POINTS, ACHIEVEMENTS, GAME_CONFIG, ROLE_TO_TEAM } from '../shared/constants/game.js';
+import { ValidationError } from '../shared/middleware/errorHandler.js';
+
+/**
+ * Calculate points for a player based on game results
+ *
+ * @param {Object} player - Player data
+ * @param {string} player.role - Player role
+ * @param {string} player.death_time - When player died (0 = alive)
+ * @param {Array<string>} player.achievements - Player achievements
+ * @param {string} winner - Winning team
+ * @returns {number} Total points
+ */
+export function calculatePoints(player, winner) {
+  const { role, death_time, achievements = [] } = player;
+
+  // Base points: win or loss
+  const playerTeam = ROLE_TO_TEAM[role];
+  let points = (playerTeam === winner) ? POINTS.WIN : POINTS.LOSS;
+
+  // Add achievement bonuses/penalties
+  if (achievements.includes(ACHIEVEMENTS.CLEAN_WIN)) {
+    points += POINTS.CLEAN_WIN;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.FIRST_KILL)) {
+    points += POINTS.FIRST_KILL;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.BEST_MOVE)) {
+    points += POINTS.BEST_MOVE;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.SHERIFF_FIND)) {
+    points += POINTS.SHERIFF_FIND;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.GUESSING_GAME)) {
+    points += POINTS.GUESSING_GAME;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.FIRST_OUT)) {
+    points += POINTS.FIRST_OUT;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.OWN_GOAL)) {
+    points += POINTS.OWN_GOAL;
+  }
+
+  if (achievements.includes(ACHIEVEMENTS.DISQUALIFICATION)) {
+    points += POINTS.DISQUALIFICATION;
+  }
+
+  return points;
+}
+
+/**
+ * Determine the winner based on remaining players
+ *
+ * @param {Array<Object>} players - Array of player objects
+ * @returns {string} Winner team (TEAMS.CIVILIANS or TEAMS.MAFIA)
+ */
+export function determineWinner(players) {
+  const alivePlayers = players.filter(p => p.death_time === '0');
+
+  const aliveMafia = alivePlayers.filter(p =>
+    p.role === ROLES.MAFIA || p.role === ROLES.DON
+  ).length;
+
+  const aliveCivilians = alivePlayers.filter(p =>
+    p.role === ROLES.CIVILIAN || p.role === ROLES.SHERIFF
+  ).length;
+
+  // Мафия победила если их количество >= количества мирных
+  if (aliveMafia > 0 && aliveMafia >= aliveCivilians) {
+    return TEAMS.MAFIA;
+  }
+
+  // Мирные победили если мафия вся убита
+  if (aliveMafia === 0) {
+    return TEAMS.CIVILIANS;
+  }
+
+  // Игра продолжается
+  throw new ValidationError('Game is not finished yet');
+}
+
+/**
+ * Check if the win is "clean" (чистая победа)
+ * Мирные выигрывают без потерь или с минимальными потерями
+ *
+ * @param {Array<Object>} players - Array of player objects
+ * @param {string} winner - Winner team
+ * @returns {boolean} True if clean win
+ */
+export function isCleanWin(players, winner) {
+  if (winner !== TEAMS.CIVILIANS) {
+    return false;
+  }
+
+  const deadCivilians = players.filter(p =>
+    (p.role === ROLES.CIVILIAN || p.role === ROLES.SHERIFF) &&
+    p.death_time !== '0'
+  ).length;
+
+  // Чистая победа = не более 2 убитых мирных
+  return deadCivilians <= 2;
+}
+
+/**
+ * Validate game rules and player configuration
+ *
+ * @param {Array<Object>} players - Array of player objects
+ * @throws {ValidationError} If validation fails
+ */
+export function validateGameRules(players) {
+  // Check player count
+  if (players.length !== GAME_CONFIG.MIN_PLAYERS) {
+    throw new ValidationError(
+      `Game must have exactly ${GAME_CONFIG.MIN_PLAYERS} players, got ${players.length}`
+    );
+  }
+
+  // Count roles
+  const roleCounts = players.reduce((counts, player) => {
+    counts[player.role] = (counts[player.role] || 0) + 1;
+    return counts;
+  }, {});
+
+  // Validate role distribution
+  const mafiaCount = (roleCounts[ROLES.MAFIA] || 0) + (roleCounts[ROLES.DON] || 0);
+  const civilianCount = (roleCounts[ROLES.CIVILIAN] || 0) + (roleCounts[ROLES.SHERIFF] || 0);
+
+  if (mafiaCount !== GAME_CONFIG.MIN_MAFIA) {
+    throw new ValidationError(
+      `Game must have exactly ${GAME_CONFIG.MIN_MAFIA} mafia members, got ${mafiaCount}`
+    );
+  }
+
+  if (civilianCount !== GAME_CONFIG.MIN_CIVILIANS) {
+    throw new ValidationError(
+      `Game must have exactly ${GAME_CONFIG.MIN_CIVILIANS} civilians, got ${civilianCount}`
+    );
+  }
+
+  // Must have exactly 1 Don and 1 Sheriff
+  if ((roleCounts[ROLES.DON] || 0) !== 1) {
+    throw new ValidationError('Game must have exactly 1 Don');
+  }
+
+  if ((roleCounts[ROLES.SHERIFF] || 0) !== 1) {
+    throw new ValidationError('Game must have exactly 1 Sheriff');
+  }
+
+  // Validate death times
+  players.forEach((player, index) => {
+    if (!player.death_time) {
+      throw new ValidationError(`Player ${index + 1}: death_time is required`);
+    }
+
+    if (player.death_time !== '0' && !/^[1-9][DN]$/.test(player.death_time)) {
+      throw new ValidationError(
+        `Player ${index + 1}: invalid death_time format. Use "0" for alive or "1D", "2N", etc.`
+      );
+    }
+  });
+}
+
+/**
+ * Calculate full game results
+ *
+ * @param {Array<Object>} players - Array of player objects
+ * @param {string} sheriffChecks - Sheriff's checks (comma-separated player numbers)
+ * @returns {Object} Game results with winner and individual player results
+ */
+export function calculateGameResults(players, sheriffChecks = '') {
+  // Validate game rules
+  validateGameRules(players);
+
+  // Determine winner
+  const winner = determineWinner(players);
+
+  // Check for clean win
+  const cleanWin = isCleanWin(players, winner);
+
+  // Calculate points for each player
+  const results = players.map(player => {
+    const achievements = player.achievements || [];
+
+    // Add clean win achievement to survivors if applicable
+    if (cleanWin && player.death_time === '0' && ROLE_TO_TEAM[player.role] === TEAMS.CIVILIANS) {
+      if (!achievements.includes(ACHIEVEMENTS.CLEAN_WIN)) {
+        achievements.push(ACHIEVEMENTS.CLEAN_WIN);
+      }
+    }
+
+    const points = calculatePoints(
+      { ...player, achievements },
+      winner
+    );
+
+    return {
+      player_id: player.id,
+      player_name: player.name,
+      role: player.role,
+      death_time: player.death_time,
+      achievements,
+      points
+    };
+  });
+
+  return {
+    winner,
+    is_clean_win: cleanWin,
+    results
+  };
+}
+
+/**
+ * Parse sheriff checks from string
+ *
+ * @param {string} checksString - Comma-separated player numbers
+ * @returns {Array<number>} Array of player numbers
+ */
+export function parseSheriffChecks(checksString) {
+  if (!checksString || checksString.trim() === '') {
+    return [];
+  }
+
+  return checksString
+    .split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => !isNaN(n) && n > 0);
+}
+
+/**
+ * Validate individual player data
+ *
+ * @param {Object} player - Player object
+ * @param {number} index - Player index (for error messages)
+ * @throws {ValidationError} If validation fails
+ */
+export function validatePlayer(player, index) {
+  if (!player.id) {
+    throw new ValidationError(`Player ${index + 1}: id is required`);
+  }
+
+  if (!player.role || !Object.values(ROLES).includes(player.role)) {
+    throw new ValidationError(
+      `Player ${index + 1}: invalid role. Must be one of: ${Object.values(ROLES).join(', ')}`
+    );
+  }
+
+  if (player.death_time === undefined || player.death_time === null) {
+    throw new ValidationError(`Player ${index + 1}: death_time is required`);
+  }
+}
