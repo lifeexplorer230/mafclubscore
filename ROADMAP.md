@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.13 (2025-11-22)
+**Тип**: Patch
+**Изменения**: fix: Add FK verification checks after each INSERT to identify Turso replication issue
+
+
+
 ### v2.4.12 (2025-11-22)
 **Тип**: Patch
 **Изменения**: debug: Add comprehensive diagnostic logging for all FOREIGN KEY hypotheses

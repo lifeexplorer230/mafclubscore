@@ -58,6 +58,20 @@ export default async function handler(request, response) {
       isZero: sessionId === 0
     });
 
+    // 🔍 VERIFICATION: Check if session actually exists in DB
+    const sessionCheck = await db.execute({
+      sql: 'SELECT id FROM game_sessions WHERE id = ?',
+      args: [sessionId]
+    });
+    console.log('🔍 [VERIFICATION] Session exists check:', {
+      sessionId,
+      found: sessionCheck.rows.length > 0,
+      rows: sessionCheck.rows.length
+    });
+    if (sessionCheck.rows.length === 0) {
+      throw new Error(`❌ CRITICAL: Session ${sessionId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
+    }
+
     // 2. Process each game
     for (const game of games) {
       const { game_number, winner, is_clean_win, is_dry_win, results } = game;
@@ -101,6 +115,20 @@ export default async function handler(request, response) {
         isZero: gameId === 0
       });
 
+      // 🔍 VERIFICATION: Check if game actually exists in DB
+      const gameCheck = await db.execute({
+        sql: 'SELECT id FROM games WHERE id = ?',
+        args: [gameId]
+      });
+      console.log('🔍 [VERIFICATION] Game exists check:', {
+        gameId,
+        found: gameCheck.rows.length > 0,
+        rows: gameCheck.rows.length
+      });
+      if (gameCheck.rows.length === 0) {
+        throw new Error(`❌ CRITICAL: Game ${gameId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
+      }
+
       // Insert player results
       for (const playerResult of results) {
         const { player_id, name, role, points, achievements, killed_when: death_time } = playerResult;
@@ -143,6 +171,19 @@ export default async function handler(request, response) {
               rawId: playerCheck.rows[0].id,
               type: typeof playerCheck.rows[0].id
             });
+
+            // 🔍 VERIFICATION: Double-check existing player still exists
+            const existingPlayerVerify = await db.execute({
+              sql: 'SELECT id FROM players WHERE id = ?',
+              args: [playerId]
+            });
+            console.log('🔍 [VERIFICATION] Existing player verification:', {
+              playerId,
+              found: existingPlayerVerify.rows.length > 0
+            });
+            if (existingPlayerVerify.rows.length === 0) {
+              throw new Error(`❌ CRITICAL: Player ${playerId} was found but doesn't exist on re-check! (Turso consistency issue?)`);
+            }
           } else {
             // Create new player
             console.log('🔍 [DIAGNOSTIC] Creating new player:', trimmedName);
@@ -157,6 +198,19 @@ export default async function handler(request, response) {
                 rawId: newPlayer.lastInsertRowid,
                 type: typeof newPlayer.lastInsertRowid
               });
+
+              // 🔍 VERIFICATION: Check if player actually exists in DB
+              const playerVerify = await db.execute({
+                sql: 'SELECT id FROM players WHERE id = ?',
+                args: [playerId]
+              });
+              console.log('🔍 [VERIFICATION] New player exists check:', {
+                playerId,
+                found: playerVerify.rows.length > 0
+              });
+              if (playerVerify.rows.length === 0) {
+                throw new Error(`❌ CRITICAL: Player ${playerId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
+              }
             } catch (createError) {
               console.error('🔍 [DIAGNOSTIC] Player creation failed (possible race condition):', createError.message);
               // Race condition: player was created between check and insert
@@ -170,6 +224,19 @@ export default async function handler(request, response) {
                 console.log('🔍 [DIAGNOSTIC] Retrieved player after race condition:', playerId);
               } else {
                 throw createError; // Re-throw if still not found
+              }
+
+              // 🔍 VERIFICATION: Check if player from retry actually exists
+              const playerRetryVerify = await db.execute({
+                sql: 'SELECT id FROM players WHERE id = ?',
+                args: [playerId]
+              });
+              console.log('🔍 [VERIFICATION] Retry player exists check:', {
+                playerId,
+                found: playerRetryVerify.rows.length > 0
+              });
+              if (playerRetryVerify.rows.length === 0) {
+                throw new Error(`❌ CRITICAL: Player ${playerId} from retry doesn't exist in DB!`);
               }
             }
           }

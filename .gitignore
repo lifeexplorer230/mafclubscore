@@ -10,3 +10,4 @@ test-results/
 playwright-report/
 playwright/.cache/
 ROADMAP_backup_*.md
+.env*.local
