@@ -102,7 +102,7 @@ export default async function handler(request, response) {
           });
 
           if (playerCheck.rows.length > 0) {
-            playerId = playerCheck.rows[0].id;
+            playerId = Number(playerCheck.rows[0].id);
           } else {
             // Create new player
             const newPlayer = await db.execute({

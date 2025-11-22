@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.11 (2025-11-22)
+**Тип**: Patch
+**Изменения**: fix: Convert player ID from BigInt to Number
+
+
+
 ### v2.4.10 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Convert BigInt to Number for JSON serialization
