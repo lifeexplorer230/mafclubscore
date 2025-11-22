@@ -70,4 +70,40 @@ test.describe('Login Page @critical', () => {
     const hasAutofocus = await usernameInput.getAttribute('autofocus');
     expect(hasAutofocus).not.toBeNull();
   });
+
+  test('should login successfully with any credentials (legacy system)', async ({ page }) => {
+    // В текущей реализации используется legacy система авторизации
+    // которая принимает любой логин/пароль (FEATURE_NEW_AUTH_SYSTEM = false)
+
+    // Заполняем форму
+    await page.fill('#username', 'admin');
+    await page.fill('#password', 'any_password');
+
+    // Отправляем форму
+    await page.click('button[type="submit"]');
+
+    // Проверяем что произошёл редирект на game-input.html
+    await page.waitForURL('**/game-input.html', { timeout: 5000 });
+    expect(page.url()).toContain('game-input.html');
+
+    // Проверяем что в localStorage сохранились данные авторизации
+    const isLoggedIn = await page.evaluate(() => localStorage.getItem('maf_is_logged_in'));
+    const username = await page.evaluate(() => localStorage.getItem('maf_username'));
+
+    expect(isLoggedIn).toBe('true');
+    expect(username).toBe('admin');
+  });
+
+  test('should show error for empty fields', async ({ page }) => {
+    // Оставляем поля пустыми
+    await page.fill('#username', '');
+    await page.fill('#password', '');
+
+    // Пытаемся отправить форму (но браузер заблокирует из-за required)
+    const usernameInput = page.locator('#username');
+    const isRequired = await usernameInput.getAttribute('required');
+
+    // Проверяем что поля действительно обязательные
+    expect(isRequired).not.toBeNull();
+  });
 });

@@ -534,7 +534,7 @@
 
             let html = '';
 
-            data.games.forEach(({ game, players }) => {
+            data.games.forEach((game) => {
                 const winnerClass = game.winner === 'Мирные' ? 'winner-civilian' : 'winner-mafia';
 
                 let bonusBadges = '';
@@ -574,7 +574,7 @@
                                 <tbody>
                 `;
 
-                players.forEach(player => {
+                game.results.forEach(player => {
                     let roleClass = 'role-civilian';
                     if (player.role === 'Мафия') roleClass = 'role-mafia';
                     else if (player.role === 'Дон') roleClass = 'role-don';

@@ -79,7 +79,7 @@ export default async function handler(request, response) {
 
       // Insert player results
       for (const playerResult of results) {
-        const { player_id, name, role, points, achievements, killed_when } = playerResult;
+        const { player_id, name, role, points, achievements, killed_when: death_time } = playerResult;
 
         // Validate player data
         if (!player_id && (!name || !name.trim())) {
@@ -132,7 +132,7 @@ export default async function handler(request, response) {
         // Insert game result
         await db.execute({
           sql: `INSERT INTO game_results (
-            game_id, player_id, role, points, achievements, killed_when
+            game_id, player_id, role, points, achievements, death_time
           ) VALUES (?, ?, ?, ?, ?, ?)`,
           args: [
             gameId,
@@ -140,7 +140,7 @@ export default async function handler(request, response) {
             role,
             points || 0,
             achievementsStr,
-            killed_when || null
+            death_time || null
           ]
         });
       }
@@ -198,6 +198,12 @@ export default async function handler(request, response) {
 
   } catch (error) {
     console.error('Session save error:', error);
-    return handleError(response, error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code
+    });
+    return handleError(response, error, { context: 'Session API' });
   }
 }

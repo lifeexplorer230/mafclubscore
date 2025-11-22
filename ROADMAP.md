@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.3 (2025-11-22)
+**Тип**: Patch
+**Изменения**: fix: Fix field name mismatch in sessions API (killed_when → death_time)
+
+
+
 ### v2.4.2 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Use exact text matching in day-stats tests

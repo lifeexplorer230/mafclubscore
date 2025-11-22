@@ -42,6 +42,8 @@ export default async function handler(request, response) {
           gr.role,
           gr.achievements,
           gr.points,
+          gr.death_time,
+          gr.is_alive,
           p.name as player_name
         FROM game_sessions gs
         JOIN games g ON g.session_id = gs.id
@@ -81,7 +83,9 @@ export default async function handler(request, response) {
           player_name: row.player_name,
           role: row.role,
           achievements: parseAchievements(row.achievements),
-          points: row.points
+          points: row.points,
+          death_time: row.death_time,
+          is_alive: row.is_alive
         });
       }
     }
