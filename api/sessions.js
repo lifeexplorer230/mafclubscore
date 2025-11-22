@@ -81,13 +81,24 @@ export default async function handler(request, response) {
       for (const playerResult of results) {
         const { player_id, name, role, points, achievements, killed_when } = playerResult;
 
+        // Validate player data
+        if (!player_id && (!name || !name.trim())) {
+          await db.execute({
+            sql: 'DELETE FROM game_sessions WHERE id = ?',
+            args: [sessionId]
+          });
+          return sendBadRequest(response, 'Player name is required when player_id is not provided');
+        }
+
         // Get or create player
         let playerId = player_id;
         if (!playerId && name) {
+          const trimmedName = name.trim();
+
           // Check if player exists
           const playerCheck = await db.execute({
             sql: 'SELECT id FROM players WHERE LOWER(name) = LOWER(?)',
-            args: [name]
+            args: [trimmedName]
           });
 
           if (playerCheck.rows.length > 0) {
@@ -96,9 +107,25 @@ export default async function handler(request, response) {
             // Create new player
             const newPlayer = await db.execute({
               sql: 'INSERT INTO players (name) VALUES (?)',
-              args: [name]
+              args: [trimmedName]
             });
             playerId = newPlayer.lastInsertRowid;
+          }
+        }
+
+        // Validate and serialize achievements
+        let achievementsStr = '[]';
+        if (achievements) {
+          if (Array.isArray(achievements)) {
+            achievementsStr = JSON.stringify(achievements);
+          } else if (typeof achievements === 'string') {
+            // If it's already a string, validate it's valid JSON
+            try {
+              JSON.parse(achievements);
+              achievementsStr = achievements;
+            } catch {
+              achievementsStr = '[]';
+            }
           }
         }
 
@@ -112,7 +139,7 @@ export default async function handler(request, response) {
             playerId,
             role,
             points || 0,
-            achievements ? JSON.stringify(achievements) : '[]',
+            achievementsStr,
             killed_when || null
           ]
         });
@@ -125,11 +152,20 @@ export default async function handler(request, response) {
         SELECT
           p.name,
           SUM(gr.points) as total_points,
-          COUNT(CASE WHEN g.winner = gr.role THEN 1 END) as wins,
+          COUNT(CASE
+            WHEN (g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф')) THEN 1
+            WHEN (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон')) THEN 1
+            END) as wins,
           COUNT(*) as games_played,
           ROUND(
-            CAST(SUM(CASE WHEN g.winner = gr.role THEN gr.points ELSE 0 END) AS REAL) /
-            NULLIF(COUNT(CASE WHEN g.winner = gr.role THEN 1 END), 0),
+            CAST(SUM(CASE
+              WHEN (g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф')) THEN gr.points
+              WHEN (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон')) THEN gr.points
+              ELSE 0 END) AS REAL) /
+            NULLIF(COUNT(CASE
+              WHEN (g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф')) THEN 1
+              WHEN (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон')) THEN 1
+              END), 0),
             2
           ) as avg_points_per_win
         FROM game_results gr

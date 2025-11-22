@@ -65,19 +65,17 @@ export default async function handler(request, response) {
 
       if (!gamesMap.has(gameId)) {
         gamesMap.set(gameId, {
-          game: {
-            id: row.id,
-            session_id: row.session_id,
-            game_number: row.game_number,
-            winner: row.winner
-          },
-          players: []
+          id: row.id,
+          session_id: row.session_id,
+          game_number: row.game_number,
+          winner: row.winner,
+          results: []
         });
       }
 
       // Добавляем игрока если есть (LEFT JOIN может вернуть NULL)
       if (row.result_id) {
-        gamesMap.get(gameId).players.push({
+        gamesMap.get(gameId).results.push({
           id: row.result_id,
           player_id: row.player_id,
           player_name: row.player_name,
@@ -89,11 +87,11 @@ export default async function handler(request, response) {
     }
 
     // Конвертируем Map в массив
-    const gamesWithPlayers = Array.from(gamesMap.values());
+    const games = Array.from(gamesMap.values());
 
     return sendSuccess(response, {
       date: date,
-      games: gamesWithPlayers
+      games: games
     });
   } catch (error) {
     return handleError(response, error, 'Day Games API Error');

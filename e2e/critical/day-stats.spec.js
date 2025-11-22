@@ -147,7 +147,7 @@ test.describe('Day Statistics Page @critical', () => {
                 return hasTable || hasNoData || hasError;
             }, { timeout: 15000 });
 
-            // Проверяем наличие таблицы или сообщения "Нет данных" или ошибки
+            // Проверяем наличие таблицы или сообщения "Нет данных"
             const table = page.locator('.players-table');
             const noData = page.locator('#modalBody .no-data');
             const error = page.locator('#modalBody .error');
@@ -156,7 +156,11 @@ test.describe('Day Statistics Page @critical', () => {
             const noDataVisible = await noData.isVisible().catch(() => false);
             const errorVisible = await error.isVisible().catch(() => false);
 
-            expect(tableVisible || noDataVisible || errorVisible).toBeTruthy();
+            // Ошибок НЕ должно быть!
+            expect(errorVisible).toBeFalsy();
+
+            // Должна быть либо таблица, либо "Нет данных"
+            expect(tableVisible || noDataVisible).toBeTruthy();
 
             // Если есть таблица, проверяем её структуру
             if (tableVisible) {
