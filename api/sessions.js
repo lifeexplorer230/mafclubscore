@@ -46,7 +46,7 @@ export default async function handler(request, response) {
       args: [date, games.length]
     });
 
-    const sessionId = sessionResult.lastInsertRowid;
+    const sessionId = Number(sessionResult.lastInsertRowid);
 
     // 2. Process each game
     for (const game of games) {
@@ -75,7 +75,7 @@ export default async function handler(request, response) {
         ]
       });
 
-      const gameId = gameResult.lastInsertRowid;
+      const gameId = Number(gameResult.lastInsertRowid);
 
       // Insert player results
       for (const playerResult of results) {
@@ -109,7 +109,7 @@ export default async function handler(request, response) {
               sql: 'INSERT INTO players (name) VALUES (?)',
               args: [trimmedName]
             });
-            playerId = newPlayer.lastInsertRowid;
+            playerId = Number(newPlayer.lastInsertRowid);
           }
         }
 
