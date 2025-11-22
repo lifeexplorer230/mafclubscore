@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.5 (2025-11-22)
+**Тип**: Patch
+**Изменения**: chore: Trigger redeploy after removing APP_VERSION env variable
+
+
+
 ### v2.4.4 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Update day-games E2E test to match formatted death_time display
