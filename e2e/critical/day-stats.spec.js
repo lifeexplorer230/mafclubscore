@@ -164,16 +164,16 @@ test.describe('Day Statistics Page @critical', () => {
 
             // Если есть таблица, проверяем её структуру
             if (tableVisible) {
-                // Проверяем наличие заголовков
-                await expect(table.locator('th:has-text("Место")')).toBeVisible();
-                await expect(table.locator('th:has-text("Игрок")')).toBeVisible();
-                await expect(table.locator('th:has-text("Игр")')).toBeVisible();
-                await expect(table.locator('th:has-text("Побед")')).toBeVisible();
-                await expect(table.locator('th:has-text("Очков")')).toBeVisible();
-                await expect(table.locator('th:has-text("Средний балл")')).toBeVisible();
-                await expect(table.locator('th:has-text("% побед")')).toBeVisible();
-                await expect(table.locator('th:has-text("Роли")')).toBeVisible();
-                await expect(table.locator('th:has-text("Лучший ход")')).toBeVisible();
+                // Проверяем наличие заголовков (используем точное совпадение)
+                await expect(table.locator('th', { hasText: /^Место$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Игрок$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Игр$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Побед$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Очков$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Средний балл$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^% побед$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Роли$/ })).toBeVisible();
+                await expect(table.locator('th', { hasText: /^Лучший ход$/ })).toBeVisible();
 
                 // Проверяем наличие хотя бы одной строки с данными
                 const rows = table.locator('tbody tr');

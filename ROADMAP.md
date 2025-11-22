@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.2 (2025-11-22)
+**Тип**: Patch
+**Изменения**: fix: Use exact text matching in day-stats tests
+
+
+
 ### v2.4.1 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Fix API structure and SQL queries
