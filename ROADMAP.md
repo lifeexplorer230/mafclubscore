@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.3.0 (2025-11-22)
+**Тип**: Minor
+**Изменения**: feat: Add player stats modal and game save tests
+
+
+
 ### v2.2.2 (2025-11-22)
 **Тип**: Patch
 **Изменения**: chore: Remove example API files to stay within Vercel limits

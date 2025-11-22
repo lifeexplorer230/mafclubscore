@@ -182,6 +182,106 @@
             opacity: 0.8;
         }
 
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            animation: slideIn 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+        }
+
+        .players-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .players-table th {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .players-table td {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            transition: all 0.3s;
+        }
+
+        .players-table tr:hover td {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .players-table a {
+            color: #fbbf24;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .players-table a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -357,8 +457,12 @@
                                 </div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-value">${day.total_players}</div>
-                                <div class="stat-label">Игроков участвовало</div>
+                                <div class="stat-value">
+                                    <a href="#" onclick="showDayPlayers('${escapeHtml(day.date)}'); return false;" style="text-decoration: underline; cursor: pointer;">${day.total_players}</a>
+                                </div>
+                                <div class="stat-label">
+                                    <a href="#" onclick="showDayPlayers('${escapeHtml(day.date)}'); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; cursor: pointer;">Игроков участвовало</a>
+                                </div>
                             </div>
                         </div>
 
@@ -393,9 +497,171 @@
             content.innerHTML = html;
         }
 
+        // Функция показа статистики игроков за день
+        async function showDayPlayers(date) {
+            const modal = document.getElementById('playersModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+
+            // Показываем модальное окно
+            modal.style.display = 'block';
+
+            // Форматируем дату для заголовка
+            const dateObj = new Date(date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('ru-RU', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            modalTitle.textContent = `Статистика игроков за ${formattedDate}`;
+
+            try {
+                // Загружаем данные игроков за день
+                const response = await fetch(`/api/day-games?date=${date}`);
+                const data = await response.json();
+
+                if (!data.games || data.games.length === 0) {
+                    modalBody.innerHTML = '<div class="no-data">Нет данных за этот день</div>';
+                    return;
+                }
+
+                // Собираем статистику по игрокам
+                const playersStats = {};
+
+                data.games.forEach(game => {
+                    game.results.forEach(result => {
+                        const playerName = result.player_name;
+                        if (!playersStats[playerName]) {
+                            playersStats[playerName] = {
+                                name: playerName,
+                                player_id: result.player_id,
+                                games_played: 0,
+                                wins: 0,
+                                total_points: 0,
+                                roles: { 'Мирный': 0, 'Шериф': 0, 'Мафия': 0, 'Дон': 0 },
+                                best_move: 0
+                            };
+                        }
+
+                        playersStats[playerName].games_played++;
+                        playersStats[playerName].total_points += result.points;
+                        playersStats[playerName].roles[result.role]++;
+
+                        // Подсчёт побед
+                        if ((game.winner === 'Мирные' && (result.role === 'Мирный' || result.role === 'Шериф')) ||
+                            (game.winner === 'Мафия' && (result.role === 'Мафия' || result.role === 'Дон'))) {
+                            playersStats[playerName].wins++;
+                        }
+
+                        // Лучший ход
+                        if (result.best_move) {
+                            playersStats[playerName].best_move++;
+                        }
+                    });
+                });
+
+                // Конвертируем в массив и сортируем по очкам
+                const playersArray = Object.values(playersStats);
+                playersArray.sort((a, b) => b.total_points - a.total_points);
+
+                // Генерируем HTML таблицы
+                let html = `
+                    <table class="players-table">
+                        <thead>
+                            <tr>
+                                <th>Место</th>
+                                <th>Игрок</th>
+                                <th>Игр</th>
+                                <th>Побед</th>
+                                <th>Очков</th>
+                                <th>Средний балл</th>
+                                <th>% побед</th>
+                                <th>Роли</th>
+                                <th>Лучший ход</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                playersArray.forEach((player, index) => {
+                    const avgPoints = (player.total_points / player.games_played).toFixed(1);
+                    const winRate = ((player.wins / player.games_played) * 100).toFixed(0);
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const medal = index < 3 ? medals[index] : '';
+
+                    // Формируем строку с ролями
+                    const rolesStr = Object.entries(player.roles)
+                        .filter(([role, count]) => count > 0)
+                        .map(([role, count]) => {
+                            const roleEmoji = {
+                                'Мирный': '👤',
+                                'Шериф': '⭐',
+                                'Мафия': '🔫',
+                                'Дон': '👑'
+                            };
+                            return `${roleEmoji[role]} ${count}`;
+                        })
+                        .join(' ');
+
+                    html += `
+                        <tr>
+                            <td>${medal} ${index + 1}</td>
+                            <td><a href="player.html?id=${player.player_id}">${escapeHtml(player.name)}</a></td>
+                            <td>${player.games_played}</td>
+                            <td>${player.wins}</td>
+                            <td><strong>${player.total_points}</strong></td>
+                            <td>${avgPoints}</td>
+                            <td>${winRate}%</td>
+                            <td>${rolesStr}</td>
+                            <td>${player.best_move > 0 ? '⭐ ' + player.best_move : '-'}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                modalBody.innerHTML = html;
+
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+                modalBody.innerHTML = '<div class="error">Ошибка загрузки данных</div>';
+            }
+        }
+
+        // Функция закрытия модального окна
+        function closeModal() {
+            const modal = document.getElementById('playersModal');
+            modal.style.display = 'none';
+        }
+
+        // Закрытие при клике вне модального окна
+        window.onclick = function(event) {
+            const modal = document.getElementById('playersModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         // Загружаем данные при загрузке страницы
         loadDayStats();
     </script>
+
+    <!-- Модальное окно для статистики игроков -->
+    <div id="playersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Статистика игроков</div>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody">
+                <div class="loading">Загружаем данные...</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Динамическая загрузка версии -->
     <script src="/shared/version-loader.js"></script>
