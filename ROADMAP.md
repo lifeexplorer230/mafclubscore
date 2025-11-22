@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.2.2 (2025-11-22)
+**Тип**: Patch
+**Изменения**: chore: Remove example API files to stay within Vercel limits
+
+
+
 ### v2.2.1 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Add missing /api/sessions endpoint and improve error handling
