@@ -23,6 +23,8 @@ export default async function handler(request, response) {
   try {
     const { date, games } = request.body;
 
+    console.log('🔍 [DIAGNOSTIC] Session save started:', { date, gamesCount: games?.length });
+
     // Validate input
     if (!date || !games || !Array.isArray(games) || games.length === 0) {
       return sendBadRequest(response, 'Invalid session data');
@@ -41,12 +43,20 @@ export default async function handler(request, response) {
     const batch = [];
 
     // 1. Create session
+    console.log('🔍 [DIAGNOSTIC] Creating session:', { date, total_games: games.length });
     const sessionResult = await db.execute({
       sql: 'INSERT INTO game_sessions (date, total_games) VALUES (?, ?)',
       args: [date, games.length]
     });
 
     const sessionId = Number(sessionResult.lastInsertRowid);
+    console.log('🔍 [DIAGNOSTIC] Session created:', {
+      sessionId,
+      rawId: sessionResult.lastInsertRowid,
+      type: typeof sessionResult.lastInsertRowid,
+      isNaN: Number.isNaN(sessionId),
+      isZero: sessionId === 0
+    });
 
     // 2. Process each game
     for (const game of games) {
@@ -62,6 +72,13 @@ export default async function handler(request, response) {
       }
 
       // Insert game
+      console.log('🔍 [DIAGNOSTIC] Creating game:', {
+        session_id: sessionId,
+        game_number,
+        winner,
+        sessionIdValid: sessionId && !Number.isNaN(sessionId) && sessionId > 0
+      });
+
       const gameResult = await db.execute({
         sql: `INSERT INTO games (
           session_id, game_number, winner, is_clean_win, is_dry_win
@@ -76,10 +93,25 @@ export default async function handler(request, response) {
       });
 
       const gameId = Number(gameResult.lastInsertRowid);
+      console.log('🔍 [DIAGNOSTIC] Game created:', {
+        gameId,
+        rawId: gameResult.lastInsertRowid,
+        type: typeof gameResult.lastInsertRowid,
+        isNaN: Number.isNaN(gameId),
+        isZero: gameId === 0
+      });
 
       // Insert player results
       for (const playerResult of results) {
         const { player_id, name, role, points, achievements, killed_when: death_time } = playerResult;
+
+        console.log('🔍 [DIAGNOSTIC] Processing player:', {
+          player_id,
+          player_id_type: typeof player_id,
+          name,
+          role,
+          death_time
+        });
 
         // Validate player data
         if (!player_id && (!name || !name.trim())) {
@@ -92,8 +124,11 @@ export default async function handler(request, response) {
 
         // Get or create player
         let playerId = player_id;
+        console.log('🔍 [DIAGNOSTIC] Initial playerId:', { playerId, type: typeof playerId });
+
         if (!playerId && name) {
           const trimmedName = name.trim();
+          console.log('🔍 [DIAGNOSTIC] Looking for existing player:', trimmedName);
 
           // Check if player exists
           const playerCheck = await db.execute({
@@ -103,13 +138,40 @@ export default async function handler(request, response) {
 
           if (playerCheck.rows.length > 0) {
             playerId = Number(playerCheck.rows[0].id);
+            console.log('🔍 [DIAGNOSTIC] Found existing player:', {
+              playerId,
+              rawId: playerCheck.rows[0].id,
+              type: typeof playerCheck.rows[0].id
+            });
           } else {
             // Create new player
-            const newPlayer = await db.execute({
-              sql: 'INSERT INTO players (name) VALUES (?)',
-              args: [trimmedName]
-            });
-            playerId = Number(newPlayer.lastInsertRowid);
+            console.log('🔍 [DIAGNOSTIC] Creating new player:', trimmedName);
+            try {
+              const newPlayer = await db.execute({
+                sql: 'INSERT INTO players (name) VALUES (?)',
+                args: [trimmedName]
+              });
+              playerId = Number(newPlayer.lastInsertRowid);
+              console.log('🔍 [DIAGNOSTIC] Created new player:', {
+                playerId,
+                rawId: newPlayer.lastInsertRowid,
+                type: typeof newPlayer.lastInsertRowid
+              });
+            } catch (createError) {
+              console.error('🔍 [DIAGNOSTIC] Player creation failed (possible race condition):', createError.message);
+              // Race condition: player was created between check and insert
+              // Try to fetch the player again
+              const retryCheck = await db.execute({
+                sql: 'SELECT id FROM players WHERE LOWER(name) = LOWER(?)',
+                args: [trimmedName]
+              });
+              if (retryCheck.rows.length > 0) {
+                playerId = Number(retryCheck.rows[0].id);
+                console.log('🔍 [DIAGNOSTIC] Retrieved player after race condition:', playerId);
+              } else {
+                throw createError; // Re-throw if still not found
+              }
+            }
           }
         }
 
@@ -133,6 +195,30 @@ export default async function handler(request, response) {
         // If death_time is '0' or null, player is alive (1), otherwise dead (0)
         const isAlive = (!death_time || death_time === '0') ? 1 : 0;
 
+        // Validate all IDs before INSERT
+        const insertData = {
+          gameId,
+          playerId,
+          role,
+          points: points || 0,
+          achievementsStr,
+          death_time: death_time || null,
+          isAlive
+        };
+
+        console.log('🔍 [DIAGNOSTIC] Before game_result INSERT:', insertData);
+
+        // Check for invalid IDs (Гипотезы 2, 6, 9)
+        if (!gameId || Number.isNaN(gameId) || gameId === 0) {
+          throw new Error(`❌ HYPOTHESIS 2/9: Invalid gameId: ${gameId} (type: ${typeof gameId})`);
+        }
+        if (!playerId || Number.isNaN(playerId) || playerId === 0) {
+          throw new Error(`❌ HYPOTHESIS 6/9: Invalid playerId: ${playerId} (type: ${typeof playerId})`);
+        }
+        if (typeof playerId === 'string') {
+          throw new Error(`❌ HYPOTHESIS 4: playerId is string: "${playerId}"`);
+        }
+
         // Insert game result
         await db.execute({
           sql: `INSERT INTO game_results (
@@ -148,6 +234,8 @@ export default async function handler(request, response) {
             isAlive
           ]
         });
+
+        console.log('🔍 [DIAGNOSTIC] game_result INSERT successful for player:', name || playerId);
       }
     }
 
