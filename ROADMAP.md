@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.7 (2025-11-22)
+**Тип**: Patch
+**Изменения**: fix: Add is_alive field to game_results INSERT
+
+
+
 ### v2.4.6 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Handle object message parameter in handleError function

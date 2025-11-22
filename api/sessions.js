@@ -129,18 +129,23 @@ export default async function handler(request, response) {
           }
         }
 
+        // Calculate is_alive based on death_time
+        // If death_time is '0' or null, player is alive (1), otherwise dead (0)
+        const isAlive = (!death_time || death_time === '0') ? 1 : 0;
+
         // Insert game result
         await db.execute({
           sql: `INSERT INTO game_results (
-            game_id, player_id, role, points, achievements, death_time
-          ) VALUES (?, ?, ?, ?, ?, ?)`,
+            game_id, player_id, role, points, achievements, death_time, is_alive
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           args: [
             gameId,
             playerId,
             role,
             points || 0,
             achievementsStr,
-            death_time || null
+            death_time || null,
+            isAlive
           ]
         });
       }
