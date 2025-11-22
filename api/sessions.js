@@ -209,6 +209,8 @@ export default async function handler(request, response) {
       name: error.name,
       code: error.code
     });
-    return handleError(response, error, { context: 'Session API' });
+
+    // Return detailed error in development or with explicit error message
+    return handleError(response, error, error.message || { context: 'Session API' });
   }
 }

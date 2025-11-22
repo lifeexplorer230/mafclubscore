@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.8 (2025-11-22)
+**Тип**: Patch
+**Изменения**: debug: Return detailed error message in sessions API
+
+
+
 ### v2.4.7 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Add is_alive field to game_results INSERT
