@@ -13,13 +13,19 @@
  * @param {string} message - Custom error message
  */
 export function handleError(response, error, message = 'Internal Server Error') {
-  console.error(`API Error: ${message}`, error);
+  // Handle case where message is an object (e.g., { context: 'Session API' })
+  let errorMessage = message;
+  if (typeof message === 'object' && message !== null) {
+    errorMessage = message.context || 'Internal Server Error';
+  }
+
+  console.error(`API Error: ${errorMessage}`, error);
 
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   // ✅ Security: Don't leak error details in production
   const responseBody = {
-    error: message
+    error: errorMessage
   };
 
   // Only include error details in development mode
