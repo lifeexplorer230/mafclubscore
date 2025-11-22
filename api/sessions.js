@@ -42,8 +42,8 @@ export default async function handler(request, response) {
 
     // 1. Create session
     const sessionResult = await db.execute({
-      sql: 'INSERT INTO game_sessions (date) VALUES (?)',
-      args: [date]
+      sql: 'INSERT INTO game_sessions (date, total_games) VALUES (?, ?)',
+      args: [date, games.length]
     });
 
     const sessionId = sessionResult.lastInsertRowid;
