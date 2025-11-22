@@ -33,14 +33,14 @@ test.describe('Game Saving @critical', () => {
         // Заполняем данные игроков
         const players = [
             { name: 'Игрок1', role: 'Шериф', death: '0' },
-            { name: 'Игрок2', role: 'Мирный', death: '1' },
-            { name: 'Игрок3', role: 'Мирный', death: '2' },
+            { name: 'Игрок2', role: 'Мирный', death: '1N' },
+            { name: 'Игрок3', role: 'Мирный', death: '2N' },
             { name: 'Игрок4', role: 'Мирный', death: '0' },
             { name: 'Игрок5', role: 'Мирный', death: '0' },
             { name: 'Игрок6', role: 'Мирный', death: '0' },
-            { name: 'Игрок7', role: 'Мафия', death: '3' },
-            { name: 'Игрок8', role: 'Мафия', death: '4' },
-            { name: 'Игрок9', role: 'Дон', death: '5' },
+            { name: 'Игрок7', role: 'Мафия', death: '3N' },
+            { name: 'Игрок8', role: 'Мафия', death: '4D' },
+            { name: 'Игрок9', role: 'Дон', death: '5N' },
             { name: 'Игрок10', role: 'Мирный', death: '0' }
         ];
 
@@ -108,7 +108,7 @@ test.describe('Game Saving @critical', () => {
         expect(successMessage).toContain('Игра успешно сохранена');
 
         // Проверяем что показан лучший игрок дня
-        const bestPlayerSection = page.locator('div:has-text("Лучший игрок дня")');
+        const bestPlayerSection = page.locator('.success-message:has-text("Лучший игрок дня")');
         await expect(bestPlayerSection).toBeVisible();
         expect(await bestPlayerSection.textContent()).toContain('Игрок1');
     });
