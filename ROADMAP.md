@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.2.1 (2025-11-22)
+**Тип**: Patch
+**Изменения**: fix: Add missing /api/sessions endpoint and improve error handling
+
+
+
 ### v2.2.0 (2025-11-15)
 **Тип**: Minor
 **Изменения**: feat: Add validation schemas, query optimization, and integration tests (P1, P2)
