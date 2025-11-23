@@ -286,23 +286,76 @@ export default async function handler(request, response) {
           throw new Error(`❌ HYPOTHESIS 4: playerId is string: "${playerId}"`);
         }
 
-        // Insert game result
-        await db.execute({
-          sql: `INSERT INTO game_results (
-            game_id, player_id, role, points, achievements, death_time, is_alive
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          args: [
-            gameId,
-            playerId,
-            role,
-            points || 0,
-            achievementsStr,
-            death_time || null,
-            isAlive
-          ]
-        });
+        // Insert game result with retry logic for Turso replication delay
+        // Retry up to 3 times with exponential backoff if FOREIGN KEY constraint fails
+        let insertSuccess = false;
+        let lastError = null;
+        const maxRetries = 3;
 
-        console.log('🔍 [DIAGNOSTIC] game_result INSERT successful for player:', name || playerId);
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`🔍 [DIAGNOSTIC] game_result INSERT attempt ${attempt}/${maxRetries} for player:`, name || playerId);
+
+            await db.execute({
+              sql: `INSERT INTO game_results (
+                game_id, player_id, role, points, achievements, death_time, is_alive
+              ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              args: [
+                gameId,
+                playerId,
+                role,
+                points || 0,
+                achievementsStr,
+                death_time || null,
+                isAlive
+              ]
+            });
+
+            insertSuccess = true;
+            console.log('✅ [SUCCESS] game_result INSERT successful for player:', name || playerId);
+            break; // Success - exit retry loop
+
+          } catch (insertError) {
+            lastError = insertError;
+            const isForeignKeyError = insertError.message &&
+              (insertError.message.includes('FOREIGN KEY constraint failed') ||
+               insertError.message.includes('SQLITE_CONSTRAINT'));
+
+            if (isForeignKeyError && attempt < maxRetries) {
+              // Turso replication delay - wait and retry
+              const delayMs = Math.pow(2, attempt - 1) * 100; // 100ms, 200ms, 400ms
+              console.warn(`⚠️ [RETRY] FOREIGN KEY error on attempt ${attempt}, retrying in ${delayMs}ms...`, {
+                playerId,
+                gameId,
+                error: insertError.message
+              });
+
+              // Wait for Turso replication
+              await new Promise(resolve => setTimeout(resolve, delayMs));
+
+              // Verify player still exists before retry
+              const playerStillExists = await db.execute({
+                sql: 'SELECT id FROM players WHERE id = ?',
+                args: [playerId]
+              });
+
+              if (playerStillExists.rows.length === 0) {
+                console.error(`❌ [CRITICAL] Player ${playerId} disappeared between creation and INSERT!`);
+                throw new Error(`Player ${playerId} (${name}) was created but no longer exists in database`);
+              }
+
+              console.log(`🔍 [RETRY] Player ${playerId} verified, retrying INSERT...`);
+            } else {
+              // Not a FOREIGN KEY error or max retries reached - throw immediately
+              throw insertError;
+            }
+          }
+        }
+
+        if (!insertSuccess) {
+          console.error('❌ [FAILED] All retry attempts exhausted for player:', name || playerId);
+          throw lastError;
+        }
       }
     }
 
