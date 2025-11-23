@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.5.0 (2025-11-23)
+**Тип**: Minor
+**Изменения**: feat: Add cleanup endpoint for orphaned game sessions
+
+
+
 ### v2.4.19 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Clean up orphaned game_sessions on error
