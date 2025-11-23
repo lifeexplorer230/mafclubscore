@@ -434,7 +434,9 @@
                 }
             }
 
-            if (achievements.includes('Угадайка')) {
+            // Проверяем угадайку (может быть "Угадайка" или "Победа в угадайке")
+            const hasGuessing = achievements.some(a => a.includes('угадайк'));
+            if (hasGuessing) {
                 if (role === 'Мирный') {
                     breakdown.push('Угадайка (+2)');
                 } else if (role === 'Мафия' || role === 'Дон') {
