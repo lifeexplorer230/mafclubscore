@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.14 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Update admin authentication token across all pages
+
+
+
 ### v2.4.13 (2025-11-22)
 **Тип**: Patch
 **Изменения**: fix: Add FK verification checks after each INSERT to identify Turso replication issue

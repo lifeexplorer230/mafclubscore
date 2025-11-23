@@ -584,9 +584,9 @@
             document.getElementById('content').innerHTML = html;
 
             // Показываем кнопку удаления для авторизованных
-            const authToken = localStorage.getItem('auth_token');
+            const authToken = localStorage.getItem('maf_auth_token');
             console.log('Auth token:', authToken); // Отладка
-            const isLoggedIn = authToken === 'egor_admin';
+            const isLoggedIn = authToken === 'secure-admin-token-94a8bc927efa3b183793399b3c5d5e6b';
             console.log('Is logged in:', isLoggedIn); // Отладка
 
             if (isLoggedIn) {
@@ -607,7 +607,7 @@
                 return;
             }
 
-            const authToken = localStorage.getItem('auth_token');
+            const authToken = localStorage.getItem('maf_auth_token');
 
             try {
                 const response = await fetch(`/api/games/${gameId}`, {
