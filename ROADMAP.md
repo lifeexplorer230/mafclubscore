@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.8.0 (2025-11-23)
+**Тип**: Minor
+**Изменения**: feat: Add autocomplete for player names and optimize player lookup
+
+
+
 ### v2.7.2 (2025-11-23)
 **Тип**: Patch
 **Изменения**: perf: Skip all verification queries in preview to prevent timeout

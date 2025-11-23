@@ -556,10 +556,14 @@
                     // Точное совпадение - зелёный
                     input.classList.remove('new-player');
                     input.classList.add('existing-player');
+                    // Сохраняем player_id для существующего игрока
+                    input.dataset.playerId = exactMatch.id;
                 } else {
                     // Нет точного совпадения - жёлтый (новый игрок)
                     input.classList.remove('existing-player');
                     input.classList.add('new-player');
+                    // Убираем player_id для нового игрока
+                    delete input.dataset.playerId;
                 }
 
                 // Показываем автодополнение
@@ -572,6 +576,8 @@
                             input.value = player.name;
                             input.classList.remove('new-player');
                             input.classList.add('existing-player');
+                            // Сохраняем player_id при выборе из dropdown
+                            input.dataset.playerId = player.id;
                             autocompleteDiv.style.display = 'none';
                         };
                         autocompleteDiv.appendChild(item);
@@ -724,7 +730,8 @@
 
             // Собираем данных игроков
             for (let p = 1; p <= 10; p++) {
-                const name = document.getElementById(`g${gameNum}_p${p}_name`).value.trim();
+                const nameInput = document.getElementById(`g${gameNum}_p${p}_name`);
+                const name = nameInput.value.trim();
                 const role = document.getElementById(`g${gameNum}_p${p}_role`).value;
                 const death = document.getElementById(`g${gameNum}_p${p}_death`).value.trim();
 
@@ -732,11 +739,18 @@
                     return null; // Обязательное поле не заполнено
                 }
 
-                players.push({
+                const playerData = {
                     name: name,
                     role: role,
                     killed_when: death || '0'
-                });
+                };
+
+                // Если есть player_id (существующий игрок), добавляем его
+                if (nameInput.dataset.playerId) {
+                    playerData.player_id = parseInt(nameInput.dataset.playerId);
+                }
+
+                players.push(playerData);
             }
 
             // Используем калькулятор из rating_calculator.js

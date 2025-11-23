@@ -156,14 +156,14 @@ export default async function handler(request, response) {
         let playerId = player_id;
         console.log('🔍 [DIAGNOSTIC] Initial playerId:', { playerId, type: typeof playerId });
 
+        // Check if preview environment for performance optimizations
+        const isPreview = process.env.VERCEL_ENV === 'preview';
+
         if (!playerId && name) {
           const trimmedName = name.trim();
           console.log('🔍 [DIAGNOSTIC] Looking for existing player:', trimmedName);
 
           // Check if player exists
-          // Check if preview environment for performance optimizations
-          const isPreview = process.env.VERCEL_ENV === 'preview';
-
           const playerCheck = await db.execute({
             sql: 'SELECT id FROM players WHERE LOWER(name) = LOWER(?)',
             args: [trimmedName]
