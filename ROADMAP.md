@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.6.1 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Cleanup API now also removes games without results
+
+
+
 ### v2.6.0 (2025-11-23)
 **Тип**: Minor
 **Изменения**: feat: Add debug API to analyze games and sessions
