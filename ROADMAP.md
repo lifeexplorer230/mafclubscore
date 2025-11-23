@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.16 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Add replication delays and verify both FK constraints
+
+
+
 ### v2.4.15 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Add retry logic for FOREIGN KEY constraint failures in game_results

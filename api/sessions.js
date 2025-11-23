@@ -129,6 +129,11 @@ export default async function handler(request, response) {
         throw new Error(`❌ CRITICAL: Game ${gameId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
       }
 
+      // ⏱️ Wait 50ms for Turso replication before inserting game_results
+      // This helps prevent FOREIGN KEY constraint errors
+      await new Promise(resolve => setTimeout(resolve, 50));
+      console.log('🔍 [REPLICATION] Waited 50ms for Turso replication after game creation');
+
       // Insert player results
       for (const playerResult of results) {
         const { player_id, name, role, points, achievements, killed_when: death_time } = playerResult;
@@ -211,6 +216,10 @@ export default async function handler(request, response) {
               if (playerVerify.rows.length === 0) {
                 throw new Error(`❌ CRITICAL: Player ${playerId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
               }
+
+              // ⏱️ Wait 30ms for Turso replication after new player creation
+              await new Promise(resolve => setTimeout(resolve, 30));
+              console.log('🔍 [REPLICATION] Waited 30ms after creating new player:', trimmedName);
             } catch (createError) {
               console.error('🔍 [DIAGNOSTIC] Player creation failed (possible race condition):', createError.message);
               // Race condition: player was created between check and insert
@@ -333,7 +342,7 @@ export default async function handler(request, response) {
               // Wait for Turso replication
               await new Promise(resolve => setTimeout(resolve, delayMs));
 
-              // Verify player still exists before retry
+              // Verify BOTH player and game still exist before retry
               const playerStillExists = await db.execute({
                 sql: 'SELECT id FROM players WHERE id = ?',
                 args: [playerId]
@@ -344,7 +353,17 @@ export default async function handler(request, response) {
                 throw new Error(`Player ${playerId} (${name}) was created but no longer exists in database`);
               }
 
-              console.log(`🔍 [RETRY] Player ${playerId} verified, retrying INSERT...`);
+              const gameStillExists = await db.execute({
+                sql: 'SELECT id FROM games WHERE id = ?',
+                args: [gameId]
+              });
+
+              if (gameStillExists.rows.length === 0) {
+                console.error(`❌ [CRITICAL] Game ${gameId} disappeared between creation and INSERT!`);
+                throw new Error(`Game ${gameId} was created but no longer exists in database`);
+              }
+
+              console.log(`🔍 [RETRY] Player ${playerId} and Game ${gameId} verified, retrying INSERT...`);
             } else {
               // Not a FOREIGN KEY error or max retries reached - throw immediately
               throw insertError;
