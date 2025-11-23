@@ -536,8 +536,8 @@
                 autocompleteDiv.innerHTML = '';
                 autocompleteDiv.style.display = 'none';
 
-                if (value.length < 2) {
-                    // Если меньше 2 символов - убираем подсветку
+                if (value.length < 1) {
+                    // Если пусто - убираем подсветку
                     input.classList.remove('existing-player', 'new-player');
                     return;
                 }
