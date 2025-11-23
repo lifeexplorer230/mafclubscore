@@ -29,6 +29,15 @@ export function getDatabaseConfig() {
   const dbType = isPreview ? 'STAGING' : (env === 'production' ? 'PRODUCTION' : 'LOCAL');
 
   console.log(`🗄️  [DB-CONFIG] Environment: ${env} → Using ${dbType} database`);
+  console.log(`🗄️  [DB-CONFIG] DEBUG:`, {
+    isPreview,
+    hasStagingUrl: !!process.env.TURSO_DATABASE_URL_STAGING,
+    hasStagingToken: !!process.env.TURSO_AUTH_TOKEN_STAGING,
+    hasProdUrl: !!process.env.TURSO_DATABASE_URL,
+    hasProdToken: !!process.env.TURSO_AUTH_TOKEN,
+    finalUrl: url ? url.substring(0, 30) + '...' : 'undefined',
+    finalToken: authToken ? 'exists' : 'undefined'
+  });
 
   return {
     url,
