@@ -441,7 +441,7 @@
         }
 
         function formatDeathTime(deathTime) {
-            if (deathTime === '0') {
+            if (!deathTime || deathTime === '0') {
                 return '✅ Живой';
             }
 

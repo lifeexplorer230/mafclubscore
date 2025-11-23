@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.9.1 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Fix death_time not being saved and null handling in formatDeathTime
+
+
+
 ### v2.9.0 (2025-11-23)
 **Тип**: Minor
 **Изменения**: feat: Add validation for minimum kills and game logic in game input

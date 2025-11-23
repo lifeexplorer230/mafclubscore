@@ -183,7 +183,9 @@ export default async function handler(request, response) {
 
       // Insert player results
       for (const playerResult of results) {
-        const { player_id, name, role, points, achievements, killed_when: death_time } = playerResult;
+        // Support both 'killed_when' (from rating_calculator.js) and 'death_time' (legacy)
+        const death_time = playerResult.death_time || playerResult.killed_when;
+        const { player_id, name, role, points, achievements } = playerResult;
 
         console.log('🔍 [DIAGNOSTIC] Processing player:', {
           player_id,
