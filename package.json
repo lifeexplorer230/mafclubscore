@@ -1,6 +1,6 @@
 {
   "name": "mafclubscore",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "description": "МАФ-Клуб Рейтинговая Система",
   "type": "module",
   "scripts": {

@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.7.2 (2025-11-23)
+**Тип**: Patch
+**Изменения**: perf: Skip all verification queries in preview to prevent timeout
+
+
+
 ### v2.7.1 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Move db-config.js to shared/ to avoid Vercel function limit

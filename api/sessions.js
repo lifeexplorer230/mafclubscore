@@ -161,6 +161,9 @@ export default async function handler(request, response) {
           console.log('🔍 [DIAGNOSTIC] Looking for existing player:', trimmedName);
 
           // Check if player exists
+          // Check if preview environment for performance optimizations
+          const isPreview = process.env.VERCEL_ENV === 'preview';
+
           const playerCheck = await db.execute({
             sql: 'SELECT id FROM players WHERE LOWER(name) = LOWER(?)',
             args: [trimmedName]
@@ -174,17 +177,19 @@ export default async function handler(request, response) {
               type: typeof playerCheck.rows[0].id
             });
 
-            // 🔍 VERIFICATION: Double-check existing player still exists
-            const existingPlayerVerify = await db.execute({
-              sql: 'SELECT id FROM players WHERE id = ?',
-              args: [playerId]
-            });
-            console.log('🔍 [VERIFICATION] Existing player verification:', {
-              playerId,
-              found: existingPlayerVerify.rows.length > 0
-            });
-            if (existingPlayerVerify.rows.length === 0) {
-              throw new Error(`❌ CRITICAL: Player ${playerId} was found but doesn't exist on re-check! (Turso consistency issue?)`);
+            // 🔍 VERIFICATION: Double-check existing player still exists (only for production)
+            if (!isPreview) {
+              const existingPlayerVerify = await db.execute({
+                sql: 'SELECT id FROM players WHERE id = ?',
+                args: [playerId]
+              });
+              console.log('🔍 [VERIFICATION] Existing player verification:', {
+                playerId,
+                found: existingPlayerVerify.rows.length > 0
+              });
+              if (existingPlayerVerify.rows.length === 0) {
+                throw new Error(`❌ CRITICAL: Player ${playerId} was found but doesn't exist on re-check! (Turso consistency issue?)`);
+              }
             }
           } else {
             // Create new player
@@ -201,24 +206,24 @@ export default async function handler(request, response) {
                 type: typeof newPlayer.lastInsertRowid
               });
 
-              // 🔍 VERIFICATION: Check if player actually exists in DB
-              const playerVerify = await db.execute({
-                sql: 'SELECT id FROM players WHERE id = ?',
-                args: [playerId]
-              });
-              console.log('🔍 [VERIFICATION] New player exists check:', {
-                playerId,
-                found: playerVerify.rows.length > 0
-              });
-              if (playerVerify.rows.length === 0) {
-                throw new Error(`❌ CRITICAL: Player ${playerId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
-              }
+              // 🔍 VERIFICATION: Check if player actually exists in DB (only for production)
+              if (!isPreview) {
+                const playerVerify = await db.execute({
+                  sql: 'SELECT id FROM players WHERE id = ?',
+                  args: [playerId]
+                });
+                console.log('🔍 [VERIFICATION] New player exists check:', {
+                  playerId,
+                  found: playerVerify.rows.length > 0
+                });
+                if (playerVerify.rows.length === 0) {
+                  throw new Error(`❌ CRITICAL: Player ${playerId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
+                }
 
-              // ⏱️ Wait for Turso replication after new player creation
-              // Preview/staging: 5ms, Production: 30ms (для минимизации timeout)
-              const replicationDelay = process.env.VERCEL_ENV === 'preview' ? 5 : 30;
-              await new Promise(resolve => setTimeout(resolve, replicationDelay));
-              console.log(`🔍 [REPLICATION] Waited ${replicationDelay}ms after creating new player:`, trimmedName);
+                // ⏱️ Wait for Turso replication after new player creation (production only)
+                await new Promise(resolve => setTimeout(resolve, 30));
+                console.log(`🔍 [REPLICATION] Waited 30ms after creating new player:`, trimmedName);
+              }
             } catch (createError) {
               console.error('🔍 [DIAGNOSTIC] Player creation failed (possible race condition):', createError.message);
               // Race condition: player was created between check and insert
@@ -234,17 +239,19 @@ export default async function handler(request, response) {
                 throw createError; // Re-throw if still not found
               }
 
-              // 🔍 VERIFICATION: Check if player from retry actually exists
-              const playerRetryVerify = await db.execute({
-                sql: 'SELECT id FROM players WHERE id = ?',
-                args: [playerId]
-              });
-              console.log('🔍 [VERIFICATION] Retry player exists check:', {
-                playerId,
-                found: playerRetryVerify.rows.length > 0
-              });
-              if (playerRetryVerify.rows.length === 0) {
-                throw new Error(`❌ CRITICAL: Player ${playerId} from retry doesn't exist in DB!`);
+              // 🔍 VERIFICATION: Check if player from retry actually exists (only for production)
+              if (!isPreview) {
+                const playerRetryVerify = await db.execute({
+                  sql: 'SELECT id FROM players WHERE id = ?',
+                  args: [playerId]
+                });
+                console.log('🔍 [VERIFICATION] Retry player exists check:', {
+                  playerId,
+                  found: playerRetryVerify.rows.length > 0
+                });
+                if (playerRetryVerify.rows.length === 0) {
+                  throw new Error(`❌ CRITICAL: Player ${playerId} from retry doesn't exist in DB!`);
+                }
               }
             }
           }
@@ -343,28 +350,30 @@ export default async function handler(request, response) {
               // Wait for Turso replication
               await new Promise(resolve => setTimeout(resolve, delayMs));
 
-              // Verify BOTH player and game still exist before retry
-              const playerStillExists = await db.execute({
-                sql: 'SELECT id FROM players WHERE id = ?',
-                args: [playerId]
-              });
+              // Verify BOTH player and game still exist before retry (only for production)
+              if (!isPreview) {
+                const playerStillExists = await db.execute({
+                  sql: 'SELECT id FROM players WHERE id = ?',
+                  args: [playerId]
+                });
 
-              if (playerStillExists.rows.length === 0) {
-                console.error(`❌ [CRITICAL] Player ${playerId} disappeared between creation and INSERT!`);
-                throw new Error(`Player ${playerId} (${name}) was created but no longer exists in database`);
+                if (playerStillExists.rows.length === 0) {
+                  console.error(`❌ [CRITICAL] Player ${playerId} disappeared between creation and INSERT!`);
+                  throw new Error(`Player ${playerId} (${name}) was created but no longer exists in database`);
+                }
+
+                const gameStillExists = await db.execute({
+                  sql: 'SELECT id FROM games WHERE id = ?',
+                  args: [gameId]
+                });
+
+                if (gameStillExists.rows.length === 0) {
+                  console.error(`❌ [CRITICAL] Game ${gameId} disappeared between creation and INSERT!`);
+                  throw new Error(`Game ${gameId} was created but no longer exists in database`);
+                }
+
+                console.log(`🔍 [RETRY] Player ${playerId} and Game ${gameId} verified, retrying INSERT...`);
               }
-
-              const gameStillExists = await db.execute({
-                sql: 'SELECT id FROM games WHERE id = ?',
-                args: [gameId]
-              });
-
-              if (gameStillExists.rows.length === 0) {
-                console.error(`❌ [CRITICAL] Game ${gameId} disappeared between creation and INSERT!`);
-                throw new Error(`Game ${gameId} was created but no longer exists in database`);
-              }
-
-              console.log(`🔍 [RETRY] Player ${playerId} and Game ${gameId} verified, retrying INSERT...`);
             } else {
               // Not a FOREIGN KEY error or max retries reached - throw immediately
               throw insertError;
