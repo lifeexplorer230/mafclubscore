@@ -806,8 +806,31 @@
                 players.push(playerData);
             }
 
+            // ✅ ВАЛИДАЦИЯ: Проверка минимального количества убийств
+            const killedPlayers = players.filter(p => p.killed_when !== '0' && p.killed_when !== '');
+            if (killedPlayers.length < 3) {
+                alert(`⚠️ ОШИБКА: В игре должно быть минимум 3 убитых игрока!\n\nСейчас убито: ${killedPlayers.length}\n\nПроверь поля "Когда убит" для всех игроков.`);
+                return null;
+            }
+
             // Используем калькулятор из rating_calculator.js
             const gameResult = calculateGame(players, sheriffChecks);
+
+            // ✅ ВАЛИДАЦИЯ: Проверка логичности результата
+            const mafiaPlayers = players.filter(p => p.role === 'Мафия' || p.role === 'Дон');
+            const civilianPlayers = players.filter(p => p.role === 'Мирный' || p.role === 'Шериф');
+            const aliveMafia = mafiaPlayers.filter(p => p.killed_when === '0' || !p.killed_when).length;
+            const aliveCivilian = civilianPlayers.filter(p => p.killed_when === '0' || !p.killed_when).length;
+
+            if (gameResult.winner === 'Мирные' && aliveMafia > 0) {
+                alert(`⚠️ ОШИБКА: Мирные не могут победить, если жива мафия!\n\nЖивых мафий: ${aliveMafia}\n\nУкажи когда была убита вся мафия.`);
+                return null;
+            }
+
+            if (gameResult.winner === 'Мафия' && aliveCivilian >= aliveMafia && aliveCivilian > 0) {
+                alert(`⚠️ ОШИБКА: Мафия не могут победить при таком раскладе!\n\nЖивых мирных: ${aliveCivilian}, Живых мафий: ${aliveMafia}\n\nМафия побеждает когда мирных меньше или равно мафии.`);
+                return null;
+            }
 
             // Добавляем name и player_id к каждому результату
             const enrichedResults = gameResult.results.map((result, index) => ({
