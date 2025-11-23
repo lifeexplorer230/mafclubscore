@@ -11,3 +11,11 @@ playwright-report/
 playwright/.cache/
 ROADMAP_backup_*.md
 .env*.local
+
+# Environment files with secrets
+.env.development
+.env.local
+.env.production
+
+# Backups (may contain sensitive data)
+backups/

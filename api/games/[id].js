@@ -66,8 +66,9 @@ export default async function handler(request, response) {
       }
 
       const deletedGameNumber = gameQuery.rows[0].game_number;
+      const sessionId = gameQuery.rows[0].session_id;
 
-      console.log(`🗑️ [DELETE] Starting deletion of Game ${deletedGameNumber} (ID: ${gameId})`);
+      console.log(`🗑️ [DELETE] Starting deletion of Game ${deletedGameNumber} (ID: ${gameId}, Session: ${sessionId})`);
 
       // Use batch/transaction for atomic deletion
       // This ensures both deletes succeed or both fail
@@ -97,9 +98,36 @@ export default async function handler(request, response) {
 
       console.log(`✅ [DELETE] Game ${deletedGameNumber} (ID: ${gameId}) successfully deleted and verified`);
 
+      // Check if session still has games
+      const remainingGamesQuery = await db.execute({
+        sql: 'SELECT COUNT(*) as count FROM games WHERE session_id = ?',
+        args: [sessionId]
+      });
+
+      const remainingGamesCount = Number(remainingGamesQuery.rows[0].count);
+
+      if (remainingGamesCount === 0) {
+        // Session is now empty - delete it
+        console.log(`🗑️ [DELETE] Session ${sessionId} is now empty - deleting session`);
+        await db.execute({
+          sql: 'DELETE FROM game_sessions WHERE id = ?',
+          args: [sessionId]
+        });
+        console.log(`✅ [DELETE] Empty session ${sessionId} deleted`);
+      } else {
+        // Session still has games - update total_games count
+        console.log(`🔄 [DELETE] Session ${sessionId} has ${remainingGamesCount} games remaining - updating count`);
+        await db.execute({
+          sql: 'UPDATE game_sessions SET total_games = ? WHERE id = ?',
+          args: [remainingGamesCount, sessionId]
+        });
+        console.log(`✅ [DELETE] Session ${sessionId} updated: total_games = ${remainingGamesCount}`);
+      }
+
       return sendSuccess(response, {
         message: 'Game deleted successfully',
-        deleted_game_number: deletedGameNumber
+        deleted_game_number: deletedGameNumber,
+        session_deleted: remainingGamesCount === 0
       });
     } catch (error) {
       console.error('Failed to delete game:', error);

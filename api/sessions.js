@@ -39,48 +39,98 @@ export default async function handler(request, response) {
 
     const db = getDB();
 
-    // 1. Create session
-    console.log('🔍 [DIAGNOSTIC] Creating session:', { date, total_games: games.length });
-    const sessionResult = await db.execute({
-      sql: 'INSERT INTO game_sessions (date, total_games) VALUES (?, ?)',
-      args: [date, games.length]
+    // 1. Find or create session for this date
+    console.log('🔍 [DIAGNOSTIC] Looking for existing session:', { date });
+    const existingSession = await db.execute({
+      sql: 'SELECT id, total_games FROM game_sessions WHERE date = ?',
+      args: [date]
     });
 
-    const sessionId = Number(sessionResult.lastInsertRowid);
-    console.log('🔍 [DIAGNOSTIC] Session created:', {
-      sessionId,
-      rawId: sessionResult.lastInsertRowid,
-      type: typeof sessionResult.lastInsertRowid,
-      isNaN: Number.isNaN(sessionId),
-      isZero: sessionId === 0
-    });
+    let sessionId;
+    let isNewSession = false;
 
-    // 🔍 VERIFICATION: Check if session actually exists in DB
-    const sessionCheck = await db.execute({
-      sql: 'SELECT id FROM game_sessions WHERE id = ?',
-      args: [sessionId]
-    });
-    console.log('🔍 [VERIFICATION] Session exists check:', {
-      sessionId,
-      found: sessionCheck.rows.length > 0,
-      rows: sessionCheck.rows.length
-    });
-    if (sessionCheck.rows.length === 0) {
-      throw new Error(`❌ CRITICAL: Session ${sessionId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
+    if (existingSession.rows.length > 0) {
+      // Use existing session
+      sessionId = Number(existingSession.rows[0].id);
+      const currentTotalGames = Number(existingSession.rows[0].total_games);
+      const newTotalGames = currentTotalGames + games.length;
+
+      console.log('🔍 [DIAGNOSTIC] Found existing session:', {
+        sessionId,
+        currentGames: currentTotalGames,
+        newGames: games.length,
+        totalAfter: newTotalGames
+      });
+
+      // Update total_games count
+      await db.execute({
+        sql: 'UPDATE game_sessions SET total_games = ? WHERE id = ?',
+        args: [newTotalGames, sessionId]
+      });
+    } else {
+      // Create new session
+      console.log('🔍 [DIAGNOSTIC] Creating new session:', { date, total_games: games.length });
+      const sessionResult = await db.execute({
+        sql: 'INSERT INTO game_sessions (date, total_games) VALUES (?, ?)',
+        args: [date, games.length]
+      });
+
+      sessionId = Number(sessionResult.lastInsertRowid);
+      isNewSession = true;
+
+      console.log('🔍 [DIAGNOSTIC] Session created:', {
+        sessionId,
+        rawId: sessionResult.lastInsertRowid,
+        type: typeof sessionResult.lastInsertRowid,
+        isNaN: Number.isNaN(sessionId),
+        isZero: sessionId === 0
+      });
+
+      // 🔍 VERIFICATION: Check if session actually exists in DB
+      const sessionCheck = await db.execute({
+        sql: 'SELECT id FROM game_sessions WHERE id = ?',
+        args: [sessionId]
+      });
+      console.log('🔍 [VERIFICATION] Session exists check:', {
+        sessionId,
+        found: sessionCheck.rows.length > 0,
+        rows: sessionCheck.rows.length
+      });
+      if (sessionCheck.rows.length === 0) {
+        throw new Error(`❌ CRITICAL: Session ${sessionId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
+      }
     }
 
-    // 2. Process each game
+    // 2. Get next game number (GLOBAL across all games, not per session)
+    const maxGameNumber = await db.execute({
+      sql: 'SELECT COALESCE(MAX(game_number), 0) as max_num FROM games',
+      args: []
+    });
+    let nextGameNumber = Number(maxGameNumber.rows[0].max_num) + 1;
+
+    console.log('🔍 [DIAGNOSTIC] Next game number (global):', {
+      sessionId,
+      maxGameNumber: maxGameNumber.rows[0].max_num,
+      nextGameNumber
+    });
+
+    // 3. Process each game
     for (const game of games) {
-      const { game_number, winner, is_clean_win, is_dry_win, results } = game;
+      const { winner, is_clean_win, is_dry_win, results } = game;
 
       // Validate game data
-      if (!game_number || !winner || !results || !Array.isArray(results)) {
-        await db.execute({
-          sql: 'DELETE FROM game_sessions WHERE id = ?',
-          args: [sessionId]
-        });
-        return sendBadRequest(response, `Invalid data for game ${game_number}`);
+      if (!winner || !results || !Array.isArray(results)) {
+        if (isNewSession) {
+          await db.execute({
+            sql: 'DELETE FROM game_sessions WHERE id = ?',
+            args: [sessionId]
+          });
+        }
+        return sendBadRequest(response, `Invalid data for game`);
       }
+
+      // Use auto-incremented game number
+      const game_number = nextGameNumber++;
 
       // Insert game
       console.log('🔍 [DIAGNOSTIC] Creating game:', {

@@ -415,59 +415,55 @@
         }
 
         function fillTestData() {
-            // Fill test data in already generated form
-            setTimeout(() => {
-                // Test player names
-                const testPlayers = [
-                    { name: 'TestAPIPlayer1', role: 'Мирный', death: null },
-                    { name: 'TestAPIPlayer2', role: 'Мирный', death: null },
-                    { name: 'TestAPIPlayer3', role: 'Мирный', death: null },
-                    { name: 'TestAPIPlayer4', role: 'Мирный', death: null },
-                    { name: 'TestAPIPlayer5', role: 'Мирный', death: null },
-                    { name: 'TestAPIPlayer6', role: 'Мирный', death: null },
-                    { name: 'TestAPIPlayer7', role: 'Шериф', death: null },
-                    { name: 'TestAPIPlayer8', role: 'Мафия', death: 'day1' },
-                    { name: 'TestAPIPlayer9', role: 'Мафия', death: 'night1' },
-                    { name: 'TestAPIPlayer10', role: 'Дон', death: 'day2' }
-                ];
+            console.log('🧪 Filling test data...');
 
-                // Fill player names and roles
-                testPlayers.forEach((player, index) => {
-                    const playerNum = index + 1;
-                    const nameInput = document.getElementById(`player-${playerNum}-name`);
-                    const roleSelect = document.getElementById(`player-${playerNum}-role`);
-                    const deathSelect = document.getElementById(`player-${playerNum}-death`);
+            // Test player data: 1-6 Мирные, 7 Шериф, 8-9 Мафия, 10 Дон
+            // Deaths: 8 (1D), 9 (1N), 10 (2D)
+            const testPlayers = [
+                { name: 'TestAPIPlayer1', role: 'Мирный', death: '0' },
+                { name: 'TestAPIPlayer2', role: 'Мирный', death: '0' },
+                { name: 'TestAPIPlayer3', role: 'Мирный', death: '0' },
+                { name: 'TestAPIPlayer4', role: 'Мирный', death: '0' },
+                { name: 'TestAPIPlayer5', role: 'Мирный', death: '0' },
+                { name: 'TestAPIPlayer6', role: 'Мирный', death: '0' },
+                { name: 'TestAPIPlayer7', role: 'Шериф', death: '0' },
+                { name: 'TestAPIPlayer8', role: 'Мафия', death: '1D' },
+                { name: 'TestAPIPlayer9', role: 'Мафия', death: '1N' },
+                { name: 'TestAPIPlayer10', role: 'Дон', death: '2D' }
+            ];
 
-                    if (nameInput) {
-                        nameInput.value = player.name;
-                        // Mark as new player (yellow)
-                        nameInput.classList.add('new-player');
-                        nameInput.classList.remove('existing-player');
-                    }
+            let filled = 0;
 
-                    if (roleSelect) {
-                        roleSelect.value = player.role;
-                    }
+            // Fill player names, roles, and deaths
+            testPlayers.forEach((player, index) => {
+                const playerNum = index + 1;
+                const nameInput = document.getElementById(`g1_p${playerNum}_name`);
+                const roleSelect = document.getElementById(`g1_p${playerNum}_role`);
+                const deathSelect = document.getElementById(`g1_p${playerNum}_death`);
 
-                    if (deathSelect && player.death) {
-                        deathSelect.value = player.death;
-                    }
-                });
-
-                // Set sheriff checks (players 1, 2, 3)
-                const sheriffChecks = document.getElementById('sheriff-checks');
-                if (sheriffChecks) {
-                    sheriffChecks.value = '1, 2, 3';
+                if (nameInput) {
+                    nameInput.value = player.name;
+                    nameInput.classList.add('new-player');
+                    nameInput.classList.remove('existing-player');
+                    filled++;
                 }
 
-                // Set winner to Мирные
-                const winnerSelect = document.getElementById('winner');
-                if (winnerSelect) {
-                    winnerSelect.value = 'Мирные';
+                if (roleSelect) {
+                    roleSelect.value = player.role;
                 }
 
-                alert('✅ Тестовые данные заполнены!\n\n10 игроков:\n• 1-6: Мирные\n• 7: Шериф\n• 8-9: Мафия\n• 10: Дон\n\nУбиты:\n• #8 (день 1)\n• #9 (ночь 1)\n• #10 (день 2)\n\nПроверки шерифа: 1, 2, 3\nПобедитель: Мирные');
-            }, 100);
+                if (deathSelect) {
+                    deathSelect.value = player.death;
+                }
+            });
+
+            // Set sheriff checks (players 1, 2, 3)
+            const sheriffChecks = document.getElementById('g1_sheriff_checks');
+            if (sheriffChecks) {
+                sheriffChecks.value = '1, 2, 3';
+            }
+
+            console.log(`✅ Test data filled: ${filled}/10 players`);
         }
 
         function startGame() {
@@ -813,12 +809,19 @@
             // Используем калькулятор из rating_calculator.js
             const gameResult = calculateGame(players, sheriffChecks);
 
+            // Добавляем name и player_id к каждому результату
+            const enrichedResults = gameResult.results.map((result, index) => ({
+                ...result,
+                name: players[index].name,
+                player_id: players[index].player_id
+            }));
+
             return {
-                game_number: gameNum,
+                // game_number вычисляется на сервере автоматически
                 winner: gameResult.winner,
                 is_clean_win: gameResult.is_clean_win,
                 is_dry_win: gameResult.is_dry_win,
-                results: gameResult.results
+                results: enrichedResults
             };
         }
 
