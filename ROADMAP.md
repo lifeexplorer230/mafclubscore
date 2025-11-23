@@ -80,8 +80,10 @@
 
 **Проект настроен на безопасную разработку:**
 
-- **Preview (тренировка)**: `staging` ветка → временный URL + staging БД
-- **Production (пользователи)**: `main` ветка → score.mafclub.biz + production БД
+- **Preview (тренировка)**: `staging` ветка → **https://mafclubscore-git-staging-lifeexplorers-projects.vercel.app** + staging БД
+- **Production (пользователи)**: `main` ветка → **https://score.mafclub.biz** + production БД
+
+**Постоянный тестовый URL:** https://mafclubscore-git-staging-lifeexplorers-projects.vercel.app (автообновляется при каждом push в staging)
 
 #### Для тренировки и тестов:
 
