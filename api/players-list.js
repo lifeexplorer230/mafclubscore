@@ -22,7 +22,8 @@ export default async function handler(request, response) {
 
     // Get all players sorted by name
     const result = await db.execute({
-      sql: 'SELECT id, name FROM players ORDER BY name ASC'
+      sql: 'SELECT id, name FROM players ORDER BY name ASC',
+      args: []
     });
 
     return sendSuccess(response, {
