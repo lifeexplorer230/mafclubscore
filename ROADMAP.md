@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.10.0 (2025-11-23)
+**Тип**: Minor
+**Изменения**: feat: Separate staging and production databases
+
+
+
 ### v2.9.3 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Fix guessing achievement detection in breakdown

@@ -14,17 +14,24 @@ export function getDatabaseConfig() {
   const env = process.env.VERCEL_ENV || 'development';
 
   // Preview окружение (staging/тренировка)
-  // NOTE: Temporarily using production DB for preview until staging DB is created
   const isPreview = env === 'preview';
 
-  // Выбор БД - используем production БД для preview, пока staging не создана
-  const url = process.env.TURSO_DATABASE_URL;
-  const authToken = process.env.TURSO_AUTH_TOKEN;
+  // Выбор БД в зависимости от окружения
+  let url, authToken, dbType;
+
+  if (isPreview) {
+    // Preview использует staging БД
+    url = process.env.TURSO_DATABASE_URL_STAGING || process.env.TURSO_DATABASE_URL;
+    authToken = process.env.TURSO_AUTH_TOKEN_STAGING || process.env.TURSO_AUTH_TOKEN;
+    dbType = process.env.TURSO_DATABASE_URL_STAGING ? 'STAGING' : 'PREVIEW (fallback to PROD)';
+  } else {
+    // Production и Development используют основную БД
+    url = process.env.TURSO_DATABASE_URL;
+    authToken = process.env.TURSO_AUTH_TOKEN;
+    dbType = env === 'production' ? 'PRODUCTION' : 'LOCAL';
+  }
 
   // Для отладки
-  const dbType = env === 'production' ? 'PRODUCTION' : (isPreview ? 'PREVIEW (using PROD DB)' : 'LOCAL');
-
-  // Только для development окружения
   if (env === 'development') {
     console.log(`🗄️  [DB-CONFIG] Environment: ${env} → Using ${dbType} database`);
   }
