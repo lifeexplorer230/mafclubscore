@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.8.1 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Add is_alive and is_clean_win/is_dry_win to game details API response
+
+
+
 ### v2.8.0 (2025-11-23)
 **Тип**: Minor
 **Изменения**: feat: Add autocomplete for player names and optimize player lookup

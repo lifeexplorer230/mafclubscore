@@ -147,6 +147,8 @@ export default async function handler(request, response) {
           g.session_id,
           g.game_number,
           g.winner,
+          g.is_clean_win,
+          g.is_dry_win,
           gs.date,
           gr.id as result_id,
           gr.player_id,
@@ -154,6 +156,7 @@ export default async function handler(request, response) {
           gr.achievements,
           gr.points,
           gr.death_time,
+          gr.is_alive,
           p.name as player_name
         FROM games g
         JOIN game_sessions gs ON g.session_id = gs.id
@@ -176,6 +179,8 @@ export default async function handler(request, response) {
       session_id: firstRow.session_id,
       game_number: firstRow.game_number,
       winner: firstRow.winner,
+      is_clean_win: firstRow.is_clean_win,
+      is_dry_win: firstRow.is_dry_win,
       date: firstRow.date
     };
 
@@ -189,7 +194,8 @@ export default async function handler(request, response) {
         role: row.role,
         achievements: parseAchievements(row.achievements),
         points: row.points,
-        death_time: row.death_time
+        death_time: row.death_time,
+        is_alive: row.is_alive
       }));
 
     return sendSuccess(response, {
