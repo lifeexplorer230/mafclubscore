@@ -984,6 +984,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.4.17 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Prevent double-submit on game save button
+
+
+
 ### v2.4.16 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Add replication delays and verify both FK constraints

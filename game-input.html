@@ -588,8 +588,19 @@
             });
         }
 
+        // Flag to prevent double-submit
+        let isSaving = false;
+
         async function saveGame() {
+            // Prevent double-submit
+            if (isSaving) {
+                console.warn('⚠️ Save already in progress, ignoring duplicate click');
+                return;
+            }
+
             try {
+                isSaving = true;
+
                 // Проверяем на дубликаты имён
                 const names = [];
                 for (let p = 1; p <= 10; p++) {
@@ -597,6 +608,7 @@
                     if (name) {
                         if (names.includes(name.toLowerCase())) {
                             alert(`❌ Ошибка: Игрок "${name}" указан дважды!\n\nВ одной игре не может быть двух игроков с одинаковыми именами.`);
+                            isSaving = false;
                             return;
                         }
                         names.push(name.toLowerCase());
@@ -607,6 +619,7 @@
                 const gameData = collectGameData(1);
                 if (!gameData) {
                     alert('Заполните все обязательные поля');
+                    isSaving = false;
                     return;
                 }
 
@@ -618,9 +631,17 @@
 
                 console.log('Отправка данных:', sessionData);
 
-                // Показываем индикатор загрузки
+                // Показываем индикатор загрузки и отключаем кнопку
                 document.getElementById('loading').classList.remove('hidden');
                 document.getElementById('step2').classList.add('hidden');
+
+                // Disable save button to prevent double-clicks
+                const saveButton = document.querySelector('button.btn-primary');
+                if (saveButton) {
+                    saveButton.disabled = true;
+                    saveButton.style.opacity = '0.5';
+                    saveButton.style.cursor = 'not-allowed';
+                }
 
                 // Отправляем на сервер
                 const response = await fetch('/api/sessions', {
@@ -691,6 +712,9 @@
                     </div>
                 `;
                 console.error('Ошибка сохранения:', error);
+            } finally {
+                // Reset flag to allow retry after error or success
+                isSaving = false;
             }
         }
 
