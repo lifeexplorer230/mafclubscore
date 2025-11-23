@@ -1036,6 +1036,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.7.1 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Move db-config.js to shared/ to avoid Vercel function limit
+
+
+
 ### v2.7.0 (2025-11-23)
 **Тип**: Minor
 **Изменения**: feat: Add staging/production database separation

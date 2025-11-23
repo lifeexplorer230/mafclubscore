@@ -7,7 +7,7 @@
  */
 
 import { createClient } from '@libsql/client';
-import { getDatabaseConfig } from '../api/db-config.js';
+import { getDatabaseConfig } from './db-config.js';
 
 /**
  * Список разрешённых имён таблиц
