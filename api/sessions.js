@@ -214,9 +214,11 @@ export default async function handler(request, response) {
                 throw new Error(`❌ CRITICAL: Player ${playerId} was inserted but doesn't exist in DB! (Turso replication issue?)`);
               }
 
-              // ⏱️ Wait 30ms for Turso replication after new player creation
-              await new Promise(resolve => setTimeout(resolve, 30));
-              console.log('🔍 [REPLICATION] Waited 30ms after creating new player:', trimmedName);
+              // ⏱️ Wait for Turso replication after new player creation
+              // Preview/staging: 5ms, Production: 30ms (для минимизации timeout)
+              const replicationDelay = process.env.VERCEL_ENV === 'preview' ? 5 : 30;
+              await new Promise(resolve => setTimeout(resolve, replicationDelay));
+              console.log(`🔍 [REPLICATION] Waited ${replicationDelay}ms after creating new player:`, trimmedName);
             } catch (createError) {
               console.error('🔍 [DIAGNOSTIC] Player creation failed (possible race condition):', createError.message);
               // Race condition: player was created between check and insert
@@ -293,10 +295,10 @@ export default async function handler(request, response) {
         }
 
         // Insert game result with retry logic for Turso replication delay
-        // Retry up to 3 times with exponential backoff if FOREIGN KEY constraint fails
+        // Preview: 1 retry (быстрее), Production: 3 retries (надёжнее)
         let insertSuccess = false;
         let lastError = null;
-        const maxRetries = 3;
+        const maxRetries = process.env.VERCEL_ENV === 'preview' ? 1 : 3;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
@@ -329,7 +331,9 @@ export default async function handler(request, response) {
 
             if (isForeignKeyError && attempt < maxRetries) {
               // Turso replication delay - wait and retry
-              const delayMs = Math.pow(2, attempt - 1) * 100; // 100ms, 200ms, 400ms
+              // Preview: shorter delays (20ms, 40ms), Production: longer (100ms, 200ms, 400ms)
+              const baseDelay = process.env.VERCEL_ENV === 'preview' ? 20 : 100;
+              const delayMs = Math.pow(2, attempt - 1) * baseDelay;
               console.warn(`⚠️ [RETRY] FOREIGN KEY error on attempt ${attempt}, retrying in ${delayMs}ms...`, {
                 playerId,
                 gameId,
