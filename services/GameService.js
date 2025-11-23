@@ -134,29 +134,31 @@ export function validateGameRules(players) {
     return counts;
   }, {});
 
-  // Validate role distribution
-  const mafiaCount = (roleCounts[ROLES.MAFIA] || 0) + (roleCounts[ROLES.DON] || 0);
-  const civilianCount = (roleCounts[ROLES.CIVILIAN] || 0) + (roleCounts[ROLES.SHERIFF] || 0);
+  // Validate exact role distribution (строгая проверка!)
+  const requiredRoles = {
+    [ROLES.CIVILIAN]: 6,
+    [ROLES.SHERIFF]: 1,
+    [ROLES.MAFIA]: 2,
+    [ROLES.DON]: 1
+  };
 
-  if (mafiaCount !== GAME_CONFIG.MIN_MAFIA) {
+  // Проверяем каждую роль отдельно
+  for (const [role, requiredCount] of Object.entries(requiredRoles)) {
+    const actualCount = roleCounts[role] || 0;
+    if (actualCount !== requiredCount) {
+      throw new ValidationError(
+        `Game must have exactly ${requiredCount} ${role}, got ${actualCount}`
+      );
+    }
+  }
+
+  // Дополнительная проверка: не должно быть неизвестных ролей
+  const validRoles = Object.values(ROLES);
+  const unknownRoles = Object.keys(roleCounts).filter(role => !validRoles.includes(role));
+  if (unknownRoles.length > 0) {
     throw new ValidationError(
-      `Game must have exactly ${GAME_CONFIG.MIN_MAFIA} mafia members, got ${mafiaCount}`
+      `Unknown roles found: ${unknownRoles.join(', ')}`
     );
-  }
-
-  if (civilianCount !== GAME_CONFIG.MIN_CIVILIANS) {
-    throw new ValidationError(
-      `Game must have exactly ${GAME_CONFIG.MIN_CIVILIANS} civilians, got ${civilianCount}`
-    );
-  }
-
-  // Must have exactly 1 Don and 1 Sheriff
-  if ((roleCounts[ROLES.DON] || 0) !== 1) {
-    throw new ValidationError('Game must have exactly 1 Don');
-  }
-
-  if ((roleCounts[ROLES.SHERIFF] || 0) !== 1) {
-    throw new ValidationError('Game must have exactly 1 Sheriff');
   }
 
   // Validate death times
@@ -194,8 +196,8 @@ export function calculateGameResults(players, sheriffChecks = '') {
   const results = players.map(player => {
     const achievements = player.achievements || [];
 
-    // Add clean win achievement to survivors if applicable
-    if (cleanWin && player.death_time === '0' && ROLE_TO_TEAM[player.role] === TEAMS.CIVILIANS) {
+    // Add clean win achievement to ALL civilians if applicable (both alive and dead)
+    if (cleanWin && ROLE_TO_TEAM[player.role] === TEAMS.CIVILIANS) {
       if (!achievements.includes(ACHIEVEMENTS.CLEAN_WIN)) {
         achievements.push(ACHIEVEMENTS.CLEAN_WIN);
       }

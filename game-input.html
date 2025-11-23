@@ -806,6 +806,45 @@
                 players.push(playerData);
             }
 
+            // ✅ ВАЛИДАЦИЯ: Проверка обязательного состава команд
+            const roleCounts = {
+                'Мирный': 0,
+                'Шериф': 0,
+                'Мафия': 0,
+                'Дон': 0
+            };
+
+            players.forEach(p => {
+                roleCounts[p.role] = (roleCounts[p.role] || 0) + 1;
+            });
+
+            const requiredRoles = {
+                'Мирный': 6,
+                'Шериф': 1,
+                'Мафия': 2,
+                'Дон': 1
+            };
+
+            let roleErrors = [];
+            for (const [role, required] of Object.entries(requiredRoles)) {
+                const actual = roleCounts[role] || 0;
+                if (actual !== required) {
+                    roleErrors.push(`${role}: ${actual} (нужно ${required})`);
+                }
+            }
+
+            if (roleErrors.length > 0) {
+                alert(`⚠️ ОШИБКА: Неправильный состав команд!\n\n` +
+                      `Обязательный состав:\n` +
+                      `• 6 Мирных\n` +
+                      `• 1 Шериф\n` +
+                      `• 2 Мафия\n` +
+                      `• 1 Дон\n\n` +
+                      `Текущий состав:\n` +
+                      roleErrors.map(e => `• ${e}`).join('\n'));
+                return null;
+            }
+
             // ✅ ВАЛИДАЦИЯ: Проверка минимального количества убийств
             const killedPlayers = players.filter(p => p.killed_when !== '0' && p.killed_when !== '');
             if (killedPlayers.length < 3) {
@@ -827,7 +866,7 @@
                 return null;
             }
 
-            if (gameResult.winner === 'Мафия' && aliveCivilian >= aliveMafia && aliveCivilian > 0) {
+            if (gameResult.winner === 'Мафия' && aliveCivilian > aliveMafia && aliveCivilian > 0) {
                 alert(`⚠️ ОШИБКА: Мафия не могут победить при таком раскладе!\n\nЖивых мирных: ${aliveCivilian}, Живых мафий: ${aliveMafia}\n\nМафия побеждает когда мирных меньше или равно мафии.`);
                 return null;
             }

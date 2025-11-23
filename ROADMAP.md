@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.9.2 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Add is_clean_win and is_dry_win to day-games API response
+
+
+
 ### v2.9.1 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Fix death_time not being saved and null handling in formatDeathTime

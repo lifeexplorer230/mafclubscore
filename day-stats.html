@@ -244,6 +244,32 @@
             padding: 15px;
             text-align: left;
             font-size: 1rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .players-table th:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .players-table th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.3;
+            font-size: 0.8rem;
+        }
+
+        .players-table th.sorted-asc::after {
+            content: ' ▲';
+            opacity: 1;
+            color: #4ade80;
+        }
+
+        .players-table th.sorted-desc::after {
+            content: ' ▼';
+            opacity: 1;
+            color: #4ade80;
         }
 
         .players-table td {
@@ -381,6 +407,69 @@
         }
         function clearElement(element) { while (element.firstChild) element.removeChild(element.firstChild); }
         // ====================================
+
+        // Функция сортировки таблицы
+        let currentSortColumn = 4; // По умолчанию сортируем по очкам
+        let currentSortOrder = 'desc';
+
+        function sortTable(columnIndex, type) {
+            const table = document.getElementById('playersTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Определяем направление сортировки
+            if (currentSortColumn === columnIndex) {
+                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortOrder = 'desc';
+                currentSortColumn = columnIndex;
+            }
+
+            // Убираем классы сортировки со всех заголовков
+            table.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            // Добавляем класс к текущему заголовку
+            const headers = table.querySelectorAll('th');
+            headers[columnIndex].classList.add(currentSortOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
+
+            // Сортируем строки
+            rows.sort((a, b) => {
+                let aValue, bValue;
+
+                if (type === 'number') {
+                    // Извлекаем числовое значение
+                    const aCellText = a.cells[columnIndex].textContent.trim();
+                    const bCellText = b.cells[columnIndex].textContent.trim();
+
+                    // Убираем % и другие символы
+                    aValue = parseFloat(aCellText.replace(/[^0-9.-]/g, '')) || 0;
+                    bValue = parseFloat(bCellText.replace(/[^0-9.-]/g, '')) || 0;
+                } else {
+                    // Текстовое сравнение (для имён)
+                    aValue = a.cells[columnIndex].textContent.trim().toLowerCase();
+                    bValue = b.cells[columnIndex].textContent.trim().toLowerCase();
+                }
+
+                if (currentSortOrder === 'asc') {
+                    return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                } else {
+                    return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+                }
+            });
+
+            // Обновляем номера мест и вставляем отсортированные строки
+            rows.forEach((row, index) => {
+                // Получаем оригинальную медаль из data-атрибута
+                const originalMedal = row.dataset.medal || '';
+                const originalRank = row.dataset.rank || '';
+
+                // В колонке "Место" показываем оригинальную медаль и ранг (не меняются)
+                row.cells[0].textContent = originalMedal + (originalMedal ? ' ' : '') + originalRank;
+                tbody.appendChild(row);
+            });
+        }
 
         async function loadDayStats() {
             try {
@@ -567,16 +656,16 @@
 
                 // Генерируем HTML таблицы
                 let html = `
-                    <table class="players-table">
+                    <table class="players-table" id="playersTable">
                         <thead>
                             <tr>
-                                <th>Место</th>
-                                <th>Игрок</th>
-                                <th>Игр</th>
-                                <th>Побед</th>
-                                <th>Очков</th>
-                                <th>Средний балл</th>
-                                <th>% побед</th>
+                                <th title="Место игрока по очкам (не меняется при сортировке)">🏆 Место</th>
+                                <th class="sortable" onclick="sortTable(1, 'string')">Игрок</th>
+                                <th class="sortable" onclick="sortTable(2, 'number')">Игр</th>
+                                <th class="sortable" onclick="sortTable(3, 'number')">Побед</th>
+                                <th class="sortable sorted-desc" onclick="sortTable(4, 'number')">Очков</th>
+                                <th class="sortable" onclick="sortTable(5, 'number')">Средний балл</th>
+                                <th class="sortable" onclick="sortTable(6, 'number')">% побед</th>
                                 <th>Роли</th>
                             </tr>
                         </thead>
@@ -604,7 +693,7 @@
                         .join(' ');
 
                     html += `
-                        <tr>
+                        <tr data-rank="${index + 1}" data-medal="${medal}">
                             <td>${medal} ${index + 1}</td>
                             <td><a href="player.html?id=${player.player_id}">${escapeHtml(player.name)}</a></td>
                             <td>${player.games_played}</td>

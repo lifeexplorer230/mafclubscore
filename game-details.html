@@ -585,17 +585,13 @@
 
             // Показываем кнопку удаления для авторизованных
             const authToken = localStorage.getItem('maf_auth_token');
-            console.log('Auth token:', authToken); // Отладка
             const isLoggedIn = authToken === 'secure-admin-token-94a8bc927efa3b183793399b3c5d5e6b';
-            console.log('Is logged in:', isLoggedIn); // Отладка
 
             if (isLoggedIn) {
                 const deleteBtn = document.getElementById('deleteBtn');
-                console.log('Delete button found:', deleteBtn); // Отладка
                 if (deleteBtn) {
                     deleteBtn.style.display = 'block';
                     deleteBtn.setAttribute('data-game-id', game.id);
-                    console.log('Delete button shown for game ID:', game.id); // Отладка
                 }
             }
         }

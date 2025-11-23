@@ -71,6 +71,8 @@ export default async function handler(request, response) {
           session_id: row.session_id,
           game_number: row.game_number,
           winner: row.winner,
+          is_clean_win: row.is_clean_win,
+          is_dry_win: row.is_dry_win,
           results: []
         });
       }
