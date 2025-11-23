@@ -7,6 +7,7 @@
  */
 
 import { createClient } from '@libsql/client';
+import { getDatabaseConfig } from '../api/db-config.js';
 
 /**
  * Список разрешённых имён таблиц
@@ -107,11 +108,12 @@ let dbInstance = null;
  */
 export function getDB() {
   if (!dbInstance) {
+    const config = getDatabaseConfig();
     dbInstance = createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN
+      url: config.url,
+      authToken: config.authToken
     });
-    console.log('✅ Database connection created');
+    console.log(`✅ Database connection created (${config.dbType})`);
   }
   return dbInstance;
 }
