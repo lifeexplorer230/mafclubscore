@@ -67,9 +67,11 @@ export default async function handler(request, response) {
 
       const deletedGameNumber = gameQuery.rows[0].game_number;
 
+      console.log(`🗑️ [DELETE] Starting deletion of Game ${deletedGameNumber} (ID: ${gameId})`);
+
       // Use batch/transaction for atomic deletion
       // This ensures both deletes succeed or both fail
-      await db.batch([
+      const batchResult = await db.batch([
         {
           sql: 'DELETE FROM game_results WHERE game_id = ?',
           args: [gameId]
@@ -80,8 +82,20 @@ export default async function handler(request, response) {
         }
       ]);
 
-      // Log the deletion for audit
-      console.log(`Game ${deletedGameNumber} (ID: ${gameId}) deleted by admin`);
+      console.log(`🗑️ [DELETE] Batch deletion completed for Game ${deletedGameNumber}:`, batchResult);
+
+      // Verify deletion
+      const verifyQuery = await db.execute({
+        sql: 'SELECT id FROM games WHERE id = ?',
+        args: [gameId]
+      });
+
+      if (verifyQuery.rows.length > 0) {
+        console.error(`❌ [DELETE] CRITICAL: Game ${gameId} still exists after deletion!`);
+        throw new Error('Game deletion failed - record still exists after delete');
+      }
+
+      console.log(`✅ [DELETE] Game ${deletedGameNumber} (ID: ${gameId}) successfully deleted and verified`);
 
       return sendSuccess(response, {
         message: 'Game deleted successfully',
