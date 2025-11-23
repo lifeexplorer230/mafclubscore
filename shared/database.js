@@ -98,21 +98,34 @@ function validateOrderBy(table, orderBy) {
 
 // Connection pool для переиспользования соединений
 let dbInstance = null;
+let cachedConfig = null;
 
 /**
  * Создаёт или возвращает существующий клиент для подключения к Turso database
  * Использует environment variables для credentials
  * Реализует простой connection pooling (singleton pattern)
+ * Автоматически пересоздает соединение при изменении конфигурации
  *
  * @returns {import('@libsql/client').Client} Database client
  */
 export function getDB() {
-  if (!dbInstance) {
-    const config = getDatabaseConfig();
+  const config = getDatabaseConfig();
+
+  // Проверяем, изменилась ли конфигурация
+  const configChanged = !cachedConfig ||
+    cachedConfig.url !== config.url ||
+    cachedConfig.authToken !== config.authToken;
+
+  if (!dbInstance || configChanged) {
+    if (configChanged && dbInstance) {
+      console.log(`🔄 Database config changed, recreating connection (${config.dbType})`);
+    }
+
     dbInstance = createClient({
       url: config.url,
       authToken: config.authToken
     });
+    cachedConfig = config;
     console.log(`✅ Database connection created (${config.dbType})`);
   }
   return dbInstance;

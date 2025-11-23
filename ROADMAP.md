@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.10.1 (2025-11-23)
+**Тип**: Patch
+**Изменения**: fix: Database connection cache invalidation on config change
+
+
+
 ### v2.10.0 (2025-11-23)
 **Тип**: Minor
 **Изменения**: feat: Separate staging and production databases
