@@ -34,6 +34,18 @@ export default async function handler(request, response) {
 
   } catch (error) {
     console.error('Players list error:', error);
-    return handleError(response, error, { context: 'Players List API' });
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name,
+      stack: error.stack
+    });
+    // Temporary: Return full error for debugging
+    return response.status(500).json({
+      error: 'Players List API Error',
+      details: error.message,
+      code: error.code,
+      environment: process.env.VERCEL_ENV
+    });
   }
 }
