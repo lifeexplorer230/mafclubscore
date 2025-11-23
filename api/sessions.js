@@ -39,9 +39,6 @@ export default async function handler(request, response) {
 
     const db = getDB();
 
-    // Start transaction
-    const batch = [];
-
     // 1. Create session
     console.log('🔍 [DIAGNOSTIC] Creating session:', { date, total_games: games.length });
     const sessionResult = await db.execute({
@@ -436,6 +433,20 @@ export default async function handler(request, response) {
       name: error.name,
       code: error.code
     });
+
+    // Cleanup: delete session if it was created
+    if (sessionId) {
+      console.log(`🧹 [CLEANUP] Deleting session ${sessionId} due to error`);
+      try {
+        await db.execute({
+          sql: 'DELETE FROM game_sessions WHERE id = ?',
+          args: [sessionId]
+        });
+        console.log(`✅ [CLEANUP] Session ${sessionId} deleted successfully`);
+      } catch (cleanupError) {
+        console.error(`❌ [CLEANUP] Failed to delete session ${sessionId}:`, cleanupError);
+      }
+    }
 
     // Return detailed error in development or with explicit error message
     return handleError(response, error, error.message || { context: 'Session API' });
