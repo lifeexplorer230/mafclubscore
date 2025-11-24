@@ -309,6 +309,8 @@
                         return avgB - avgA;
                     case 'wins':
                         return b.wins - a.wins;
+                    case 'winRate':
+                        return (b.win_rate || 0) - (a.win_rate || 0);
                     default:
                         return b.total_points - a.total_points;
                 }
@@ -326,6 +328,8 @@
                         return player.games_played > 0 ? player.total_points / player.games_played : 0;
                     case 'wins':
                         return player.wins;
+                    case 'winRate':
+                        return player.win_rate || 0;
                     default:
                         return player.total_points;
                 }
@@ -380,6 +384,12 @@
                 onclick: () => sortBy('wins')
             }));
 
+            headerRow.appendChild(createElement('th', {
+                className: `sortable ${currentSortBy === 'winRate' ? 'active' : ''}`,
+                textContent: '% побед',
+                onclick: () => sortBy('winRate')
+            }));
+
             thead.appendChild(headerRow);
             table.appendChild(thead);
 
@@ -426,6 +436,10 @@
                 row.appendChild(createElement('td', {
                     className: 'hide-mobile',
                     textContent: String(player.wins)
+                }));
+
+                row.appendChild(createElement('td', {
+                    textContent: `${player.win_rate || 0}%`
                 }));
 
                 tbody.appendChild(row);

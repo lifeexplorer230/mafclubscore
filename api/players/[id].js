@@ -35,9 +35,18 @@ export default async function handler(request, response) {
          JOIN games g ON gr.game_id = g.id
          WHERE gr.player_id = ?
          AND ((g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф'))
-              OR (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон')))) as wins
+              OR (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон')))) as wins,
+        (SELECT ROUND(
+           CAST(COUNT(CASE
+             WHEN (g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф'))
+               OR (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон'))
+             THEN 1 END) AS REAL) * 100.0 / COUNT(*),
+           1)
+         FROM game_results gr
+         JOIN games g ON gr.game_id = g.id
+         WHERE gr.player_id = ?) as win_rate
       FROM players WHERE id = ?`,
-      args: [playerId, playerId, playerId, playerId]
+      args: [playerId, playerId, playerId, playerId, playerId]
     });
 
     if (playerQuery.rows.length === 0) {

@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.11.0 (2025-11-24)
+**Тип**: Minor
+**Изменения**: feat: Add win rate percentage to rating and player profile
+
+
+
 ### v2.10.1 (2025-11-23)
 **Тип**: Patch
 **Изменения**: fix: Database connection cache invalidation on config change

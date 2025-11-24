@@ -30,7 +30,15 @@ export default async function handler(request, response) {
           WHEN (g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф'))
             OR (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон'))
           THEN 1 ELSE 0
-        END) as wins
+        END) as wins,
+        ROUND(
+          CAST(SUM(CASE
+            WHEN (g.winner = 'Мирные' AND gr.role IN ('Мирный', 'Шериф'))
+              OR (g.winner = 'Мафия' AND gr.role IN ('Мафия', 'Дон'))
+            THEN 1 ELSE 0
+          END) AS REAL) * 100.0 / COUNT(DISTINCT gr.game_id),
+          1
+        ) as win_rate
       FROM players p
       LEFT JOIN game_results gr ON p.id = gr.player_id
       LEFT JOIN games g ON gr.game_id = g.id
