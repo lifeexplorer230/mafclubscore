@@ -31,10 +31,10 @@ export function getDatabaseConfig() {
     dbType = env === 'production' ? 'PRODUCTION' : 'LOCAL';
   }
 
-  // Для отладки
-  if (env === 'development') {
-    console.log(`🗄️  [DB-CONFIG] Environment: ${env} → Using ${dbType} database`);
-  }
+  // Для отладки (временно для всех окружений)
+  console.log(`🗄️  [DB-CONFIG] Environment: ${env} → Using ${dbType} database`);
+  console.log(`🗄️  [DB-CONFIG] URL: ${url ? url.substring(0, 50) : 'MISSING'}`);
+  console.log(`🗄️  [DB-CONFIG] Auth Token: ${authToken ? 'present' : 'MISSING'}`);
 
   return {
     url,
