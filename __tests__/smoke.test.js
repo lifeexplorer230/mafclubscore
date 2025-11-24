@@ -16,7 +16,7 @@ describe('Smoke Tests', () => {
 
   test('Package.json exists and valid', async () => {
     const pkg = await import('../package.json', { assert: { type: 'json' } });
-    expect(pkg.default.name).toBe('mafclubdemo');
+    expect(pkg.default.name).toBe('mafclubscore');
     expect(pkg.default.version).toBeDefined();
   });
 });
