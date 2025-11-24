@@ -135,13 +135,13 @@ function analyzeGame(players) {
     const winner = aliveMafia === 0 ? 'Мирные' : 'Мафия';
 
     // Чистая победа мирных
-    const mafiaPlayers = players.filter(p => p.role === 'Мафия' || p.role === 'Дон');
     const civilianPlayers = players.filter(p => p.role === 'Мирный' || p.role === 'Шериф');
+    const mafiaPlayers = players.filter(p => p.role === 'Мафия' || p.role === 'Дон');
 
-    const allMafiaKilledByVote = mafiaPlayers.every(p => p.killed_when && p.killed_when.includes('D'));
+    // Чистая победа = мирные победили И ни один мирный не был убит голосованием днём
     const noCivilianKilledByVote = !civilianPlayers.some(p => p.killed_when && p.killed_when.includes('D'));
 
-    const is_clean_win = winner === 'Мирные' && allMafiaKilledByVote && noCivilianKilledByVote;
+    const is_clean_win = winner === 'Мирные' && noCivilianKilledByVote;
 
     // Победа мафии в сухую
     const is_dry_win = winner === 'Мафия' && mafiaPlayers.every(p => p.killed_when === '0' || !p.killed_when);

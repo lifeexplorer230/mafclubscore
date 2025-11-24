@@ -94,7 +94,7 @@ export function determineWinner(players) {
 
 /**
  * Check if the win is "clean" (чистая победа)
- * Мирные выигрывают без потерь или с минимальными потерями
+ * Чистая победа = мирные победили И ни один мирный не был убит голосованием днём
  *
  * @param {Array<Object>} players - Array of player objects
  * @param {string} winner - Winner team
@@ -105,13 +105,16 @@ export function isCleanWin(players, winner) {
     return false;
   }
 
-  const deadCivilians = players.filter(p =>
+  // Проверяем, был ли хоть один мирный убит голосованием днём (death_time содержит 'D')
+  const civilianKilledByVote = players.some(p =>
     (p.role === ROLES.CIVILIAN || p.role === ROLES.SHERIFF) &&
-    p.death_time !== '0'
-  ).length;
+    p.death_time &&
+    p.death_time !== '0' &&
+    p.death_time.includes('D')
+  );
 
-  // Чистая победа = не более 2 убитых мирных
-  return deadCivilians <= 2;
+  // Чистая победа = ни один мирный не был убит голосованием днём
+  return !civilianKilledByVote;
 }
 
 /**
