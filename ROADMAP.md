@@ -1038,6 +1038,12 @@ curl -I https://mafclubscore.vercel.app/api/rating \
 ## CHANGELOG
 
 
+### v2.11.1 (2025-11-24)
+**Тип**: Patch
+**Изменения**: test: Add TDD test for achievement display in game details
+
+
+
 ### v2.11.0 (2025-11-24)
 **Тип**: Minor
 **Изменения**: feat: Add win rate percentage to rating and player profile

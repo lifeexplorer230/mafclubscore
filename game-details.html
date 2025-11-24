@@ -423,7 +423,8 @@
             }
 
             // Проверяем угадайку (может быть "Угадайка" или "Победа в угадайке")
-            const hasGuessing = achievements.some(a => a.includes('угадайк'));
+            // Регистронезависимая проверка для корректной обработки "Угадайка" и "угадайка"
+            const hasGuessing = achievements.some(a => a.toLowerCase().includes('угадайк'));
             if (hasGuessing) {
                 if (role === 'Мирный') {
                     breakdown.push('Угадайка (+2)');
